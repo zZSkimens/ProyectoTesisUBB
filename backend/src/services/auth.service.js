@@ -6,7 +6,9 @@ import { usuarios } from '../../db/schema.js';
 import { config } from '../config/env.js';
 
 export const authService = {
+  
   async login(email, password) {
+    
     const [usuario] = await db
       .select()
       .from(usuarios)
@@ -34,7 +36,7 @@ export const authService = {
     };
 
     const token = jwt.sign(payload, config.jwtSecret, {
-      expiresIn: '24h',
+      expiresIn: '24h', 
     });
 
     return {

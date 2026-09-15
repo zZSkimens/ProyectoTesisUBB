@@ -1,6 +1,7 @@
 import { authService } from '../services/auth.service.js';
 
 export const authController = {
+  
   async login(req, res) {
     try {
       const { email, password } = req.body;
@@ -12,7 +13,10 @@ export const authController = {
         usuario: resultado.usuario,
       });
     } catch (error) {
-      const statusCode = error.message === 'Credenciales invalidas' ? 401 : 400;
+      let statusCode = 400;
+      if (error.message === 'Credenciales invalidas') {
+        statusCode = 401;
+      }
       res.status(statusCode).json({ error: error.message });
     }
   },

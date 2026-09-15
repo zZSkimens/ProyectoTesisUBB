@@ -6,27 +6,31 @@ async function seed() {
   console.log('[INFO] Iniciando carga de datos iniciales...');
 
   try {
+    
     const passwordHash = await bcrypt.hash('tutor123', 10);
     const [tutor] = await db
       .insert(usuarios)
       .values({
         nombre: 'Rodrigo Fuentes Morales',
-        email: 'rfuentes@ubiobio.cl',
+        email: 'rodrigo.fuentes2401@alumnos.ubiobio.cl',
         passwordHash,
         rol: 'tutor',
-        activo: true,
+        activo: true, 
       })
       .onConflictDoNothing()
       .returning();
 
-    const tutorId = tutor ? tutor.id : 1;
+    let tutorId = 1;
+    if (tutor) {
+      tutorId = tutor.id;
+    }
     console.log(`[INFO] Tutor registrado: Rodrigo Fuentes Morales (ID: ${tutorId})`);
 
     const estudiantesData = [
       {
         rut: '21.111.222-3',
         nombre: 'Constanza Morales Valenzuela',
-        email: 'cmorales@alumnos.ubiobio.cl',
+        email: 'constanza.morales2601@alumnos.ubiobio.cl',
         carrera: 'Ingeniería de Ejecución en Computación e Informática',
         anioIngreso: 2026,
         tutorId,
@@ -34,7 +38,7 @@ async function seed() {
       {
         rut: '21.333.444-5',
         nombre: 'Matías Ignacio San Martín',
-        email: 'msanmartin@alumnos.ubiobio.cl',
+        email: 'matias.sanmartin2601@alumnos.ubiobio.cl',
         carrera: 'Ingeniería de Ejecución en Computación e Informática',
         anioIngreso: 2026,
         tutorId,
@@ -42,7 +46,7 @@ async function seed() {
       {
         rut: '21.555.666-7',
         nombre: 'Valentina Paz Riquelme',
-        email: 'vriquelme@alumnos.ubiobio.cl',
+        email: 'valentina.riquelme2601@alumnos.ubiobio.cl',
         carrera: 'Ingeniería Civil Informática',
         anioIngreso: 2026,
         tutorId,
@@ -50,7 +54,7 @@ async function seed() {
       {
         rut: '21.777.888-9',
         nombre: 'Diego Alejandro Araya',
-        email: 'daraya@alumnos.ubiobio.cl',
+        email: 'diego.araya2601@alumnos.ubiobio.cl',
         carrera: 'Ingeniería de Ejecución en Computación e Informática',
         anioIngreso: 2026,
         tutorId,

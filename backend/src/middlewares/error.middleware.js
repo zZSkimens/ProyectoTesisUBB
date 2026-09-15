@@ -1,3 +1,4 @@
+
 export const manejadorErrores = (err, req, res, next) => {
   console.error('[ERROR NO CONTROLADO]:', err);
 

@@ -14,7 +14,7 @@ export const verificarToken = (req, res, next) => {
 
   try {
     const payload = jwt.verify(token, config.jwtSecret);
-    req.usuario = payload;
+    req.usuario = payload; 
     next();
   } catch (error) {
     if (error.name === 'TokenExpiredError') {

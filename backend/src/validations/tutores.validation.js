@@ -1,3 +1,4 @@
+
 export const validarIdEstudiante = (req, res, next) => {
   const { id } = req.params;
   const idNumero = Number(id);

@@ -6,6 +6,7 @@ import { validarLogin } from '../validations/auth.validation.js';
 const router = Router();
 
 router.post('/login', validarLogin, authController.login);
+
 router.get('/perfil', verificarToken, authController.perfil);
 
 export default router;

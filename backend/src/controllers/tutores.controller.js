@@ -1,6 +1,7 @@
 import { tutoresService } from '../services/tutores.service.js';
 
 export const tutoresController = {
+  
   async dashboard(req, res) {
     try {
       const metricas = await tutoresService.obtenerDashboard(req.usuario.id);
@@ -28,7 +29,10 @@ export const tutoresController = {
 
       res.json(detalle);
     } catch (error) {
-      const statusCode = error.message.includes('no encontrado') ? 404 : 500;
+      let statusCode = 500;
+      if (error.message.includes('no encontrado')) {
+        statusCode = 404;
+      }
       res.status(statusCode).json({ error: error.message });
     }
   },

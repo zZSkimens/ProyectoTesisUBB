@@ -3,7 +3,9 @@ import { db } from '../../db/connection.js';
 import { estudiantes, misiones, progresoEstudiantes } from '../../db/schema.js';
 
 export const tutoresService = {
+  
   async obtenerDashboard(tutorId) {
+    
     const alumnos = await db
       .select()
       .from(estudiantes)
@@ -44,7 +46,10 @@ export const tutoresService = {
         (p) => p.estudianteId === alumno.id && p.estado === 'completada'
       ).length;
 
-      const porcentaje = totalMisiones > 0 ? Math.round((completadas / totalMisiones) * 100) : 0;
+      let porcentaje = 0;
+      if (totalMisiones > 0) {
+        porcentaje = Math.round((completadas / totalMisiones) * 100);
+      }
       sumaPorcentajes += porcentaje;
 
       if (porcentaje < 25) {
@@ -66,6 +71,7 @@ export const tutoresService = {
   },
 
   async listarEstudiantes(tutorId) {
+    
     const alumnos = await db
       .select()
       .from(estudiantes)
@@ -85,7 +91,10 @@ export const tutoresService = {
       const enProgreso = misProgresos.filter((p) => p.estado === 'en_progreso').length;
       const puntajeTotal = misProgresos.reduce((sum, p) => sum + p.puntajeObtenido, 0);
 
-      const porcentajeAvance = totalMisiones > 0 ? Math.round((completadas / totalMisiones) * 100) : 0;
+      let porcentajeAvance = 0;
+      if (totalMisiones > 0) {
+        porcentajeAvance = Math.round((completadas / totalMisiones) * 100);
+      }
 
       let estadoAtencion = 'Al dia';
       if (porcentajeAvance < 25) {
@@ -100,10 +109,10 @@ export const tutoresService = {
         nombre: alumno.nombre,
         email: alumno.email,
         carrera: alumno.carrera,
-        añoIngreso: alumno.anioIngreso,
+        anioIngreso: alumno.anioIngreso,
+        totalMisiones,
         misionesCompletadas: completadas,
         misionesEnProgreso: enProgreso,
-        totalMisiones,
         porcentajeAvance,
         puntajeTotal,
         estadoAtencion,
@@ -112,28 +121,37 @@ export const tutoresService = {
   },
 
   async obtenerDetalleEstudiante(tutorId, estudianteId) {
+    
     const [alumno] = await db
       .select()
       .from(estudiantes)
-      .where(and(eq(estudiantes.id, estudianteId), eq(estudiantes.tutorId, tutorId)))
-      .limit(1);
+      .where(and(eq(estudiantes.id, Number(estudianteId)), eq(estudiantes.tutorId, tutorId)));
 
     if (!alumno) {
       throw new Error('Estudiante no encontrado o no asignado a este tutor');
     }
 
-    const listaMisiones = await db
-      .select()
-      .from(misiones)
-      .where(eq(misiones.activo, true));
+    const listaMisiones = await db.select().from(misiones).orderBy(misiones.orden);
 
     const progresosAlumno = await db
       .select()
       .from(progresoEstudiantes)
-      .where(eq(progresoEstudiantes.estudianteId, estudianteId));
+      .where(eq(progresoEstudiantes.estudianteId, alumno.id));
 
     const detalleMisiones = listaMisiones.map((mision) => {
       const registroProgreso = progresosAlumno.find((p) => p.misionId === mision.id);
+
+      let estado = 'pendiente';
+      let puntajeObtenido = 0;
+      let intentos = 0;
+      let fechaCompletado = null;
+
+      if (registroProgreso) {
+        estado = registroProgreso.estado;
+        puntajeObtenido = registroProgreso.puntajeObtenido;
+        intentos = registroProgreso.intentos;
+        fechaCompletado = registroProgreso.fechaCompletado;
+      }
 
       return {
         misionId: mision.id,
@@ -144,10 +162,10 @@ export const tutoresService = {
         tipo: mision.tipo,
         puntosMaximos: mision.puntosRecompensa,
         orden: mision.orden,
-        estado: registroProgreso ? registroProgreso.estado : 'pendiente',
-        puntajeObtenido: registroProgreso ? registroProgreso.puntajeObtenido : 0,
-        intentos: registroProgreso ? registroProgreso.intentos : 0,
-        fechaCompletado: registroProgreso ? registroProgreso.fechaCompletado : null,
+        estado,
+        puntajeObtenido,
+        intentos,
+        fechaCompletado,
       };
     });
 
