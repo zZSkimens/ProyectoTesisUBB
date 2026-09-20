@@ -5,7 +5,7 @@ export const TablaEstudiantes = ({ estudiantes, onSelectEstudiante }) => {
   const [busqueda, setBusqueda] = useState('');
   const [filtroEstado, setFiltroEstado] = useState('todos');
 
-  const estudiantesFiltrados = estudiantes.filter((estudiante) => {
+const estudiantesFiltrados = estudiantes.filter((estudiante) => {
     
     const termino = busqueda.toLowerCase().trim();
     let coincideTexto = true;
@@ -19,7 +19,7 @@ export const TablaEstudiantes = ({ estudiantes, onSelectEstudiante }) => {
       }
     }
 
-    let coincideEstado = true;
+let coincideEstado = true;
     if (filtroEstado !== 'todos') {
       if (estudiante.estadoAtencion.toLowerCase() !== filtroEstado.toLowerCase()) {
         coincideEstado = false;
@@ -31,13 +31,12 @@ export const TablaEstudiantes = ({ estudiantes, onSelectEstudiante }) => {
 
   return (
     <div style={styles.container}>
-      
       <div style={styles.toolbar}>
         <div style={styles.searchWrapper}>
           <Search size={18} color="#94a3b8" style={styles.searchIcon} />
           <input
             type="text"
-            placeholder="Buscar por nombre o RUT del estudiante..."
+            placeholder="Buscar estudiante por nombre..."
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             style={styles.searchInput}
@@ -74,7 +73,6 @@ export const TablaEstudiantes = ({ estudiantes, onSelectEstudiante }) => {
           </button>
         </div>
       </div>
-
       <div style={styles.tableWrapper}>
         <table style={styles.table}>
           <thead>
@@ -104,7 +102,7 @@ export const TablaEstudiantes = ({ estudiantes, onSelectEstudiante }) => {
                   progressClass = 'progress-fill-low';
                 }
 
-                let badgeClass = 'badge-en-progreso';
+let badgeClass = 'badge-en-progreso';
                 if (estudiante.estadoAtencion === 'Al dia') {
                   badgeClass = 'badge-al-dia';
                 } else if (estudiante.estadoAtencion === 'En riesgo') {
@@ -118,10 +116,7 @@ export const TablaEstudiantes = ({ estudiantes, onSelectEstudiante }) => {
                         <div style={styles.studentAvatar}>
                           <User size={16} color="#002b49" />
                         </div>
-                        <div>
-                          <span style={styles.studentName}>{estudiante.nombre}</span>
-                          <span style={styles.studentRut}>{estudiante.rut}</span>
-                        </div>
+                        <span style={styles.studentName}>{estudiante.nombre}</span>
                       </div>
                     </td>
                     <td style={styles.td}>

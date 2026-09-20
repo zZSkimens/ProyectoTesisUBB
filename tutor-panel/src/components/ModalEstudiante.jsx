@@ -7,7 +7,7 @@ export const ModalEstudiante = ({ estudianteId, onClose }) => {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
+useEffect(() => {
     async function cargarFicha() {
       if (!estudianteId) {
         return;
@@ -29,7 +29,7 @@ export const ModalEstudiante = ({ estudianteId, onClose }) => {
     cargarFicha();
   }, [estudianteId]);
 
-  useEffect(() => {
+useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
         onClose();
@@ -43,7 +43,6 @@ export const ModalEstudiante = ({ estudianteId, onClose }) => {
   return (
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-        
         <div style={styles.header}>
           <div>
             <h2 style={styles.modalTitle}>Ficha de Progreso del Estudiante</h2>
@@ -53,7 +52,6 @@ export const ModalEstudiante = ({ estudianteId, onClose }) => {
             <X size={20} />
           </button>
         </div>
-
         <div style={styles.body}>
           {cargando ? (
             <div style={styles.loadingContainer}>
@@ -73,33 +71,30 @@ export const ModalEstudiante = ({ estudianteId, onClose }) => {
 
           {!cargando && !error && detalle ? (
             <div>
-              
               <div style={styles.studentCard}>
                 <div style={styles.studentHeader}>
                   <h3 style={styles.studentNameText}>{detalle.estudiante.nombre}</h3>
-                  <span style={styles.badgeId}>ID: {detalle.estudiante.id}</span>
                 </div>
 
-                <div style={styles.studentDetailsGrid}>
-                  <div>
+                <div style={styles.studentDetailsList}>
+                  <div style={styles.detailItem}>
                     <span style={styles.detailLabel}>RUT Institucional</span>
                     <strong style={styles.detailValue}>{detalle.estudiante.rut}</strong>
                   </div>
-                  <div>
+                  <div style={styles.detailItem}>
                     <span style={styles.detailLabel}>Carrera</span>
                     <strong style={styles.detailValue}>{detalle.estudiante.carrera}</strong>
                   </div>
-                  <div>
+                  <div style={styles.detailItem}>
                     <span style={styles.detailLabel}>Correo UBB</span>
                     <strong style={styles.detailValue}>{detalle.estudiante.email}</strong>
                   </div>
-                  <div>
+                  <div style={styles.detailItemLast}>
                     <span style={styles.detailLabel}>Año de Ingreso</span>
                     <strong style={styles.detailValue}>{detalle.estudiante.añoIngreso}</strong>
                   </div>
                 </div>
               </div>
-
               <h4 style={styles.missionsTitle}>Desafíos y Misiones del Videojuego</h4>
 
               <div style={styles.missionsList}>
@@ -164,7 +159,6 @@ export const ModalEstudiante = ({ estudianteId, onClose }) => {
             </div>
           ) : null}
         </div>
-
         <div style={styles.footer}>
           <button onClick={onClose} className="btn-secondary">
             Cerrar Ficha
@@ -256,18 +250,22 @@ const styles = {
     color: '#002b49',
     margin: 0,
   },
-  badgeId: {
-    fontSize: '0.75rem',
-    backgroundColor: '#e2e8f0',
-    color: '#475569',
-    padding: '0.2rem 0.5rem',
-    borderRadius: '4px',
-    fontWeight: '600',
+  studentDetailsList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.65rem',
   },
-  studentDetailsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '0.85rem',
+  detailItem: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.15rem',
+    paddingBottom: '0.65rem',
+    borderBottom: '1px solid #e2e8f0',
+  },
+  detailItemLast: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.15rem',
   },
   detailLabel: {
     fontSize: '0.75rem',
