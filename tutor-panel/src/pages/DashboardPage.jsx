@@ -16,7 +16,7 @@ export const DashboardPage = () => {
   const [error, setError] = useState(null);
   const [estudianteModalId, setEstudianteModalId] = useState(null);
 
-  const cargarDatos = async () => {
+const cargarDatos = async () => {
     setCargando(true);
     setError(null);
 
@@ -24,6 +24,7 @@ export const DashboardPage = () => {
       const [resDashboard, resEstudiantes] = await Promise.all([
         tutoresApi.obtenerDashboard(),
         tutoresApi.obtenerEstudiantes(),
+        new Promise((resolve) => setTimeout(resolve, 600)),
       ]);
 
       setMetricas(resDashboard.metricas);
@@ -46,26 +47,28 @@ export const DashboardPage = () => {
 
   return (
     <div style={styles.page}>
-      
       <Navbar />
-
       <main style={styles.main}>
-        
         <div style={styles.welcomeBanner}>
           <div>
-            <span style={styles.welcomeTag}>Campus Concepción • Primer Semestre 2026</span>
+            <span style={styles.welcomeTag}>Campus Concepción • Segundo Semestre 2026</span>
             <h2 style={styles.welcomeTitle}>Bienvenido(a), {nombreTutor}</h2>
             <p style={styles.welcomeDesc}>
               Monitorea en tiempo real la participacion, avance de misiones y necesidades de apoyo de tus estudiantes novatos.
             </p>
           </div>
 
-          <button onClick={cargarDatos} className="btn-secondary" style={styles.refreshBtn} title="Actualizar datos">
+          <button
+            onClick={cargarDatos}
+            disabled={cargando}
+            className="btn-secondary"
+            style={styles.refreshBtn}
+            title="Actualizar datos"
+          >
             <RefreshCw size={16} className={cargando ? 'spin-icon' : ''} />
             <span>Actualizar</span>
           </button>
         </div>
-
         {error ? (
           <div style={styles.errorAlert}>
             <span>Ocurrio un problema: {error}</span>
@@ -74,9 +77,7 @@ export const DashboardPage = () => {
             </button>
           </div>
         ) : null}
-
         <TarjetasMetricas metricas={metricas} />
-
         <div style={styles.sectionHeader}>
           <div>
             <h3 style={styles.sectionTitle}>Nómina de Estudiantes de Primer Año</h3>
@@ -85,18 +86,27 @@ export const DashboardPage = () => {
             </p>
           </div>
         </div>
-
         <TablaEstudiantes
           estudiantes={estudiantes}
           onSelectEstudiante={(id) => setEstudianteModalId(id)}
         />
       </main>
-
       {estudianteModalId ? (
         <ModalEstudiante
           estudianteId={estudianteModalId}
           onClose={() => setEstudianteModalId(null)}
         />
+      ) : null}
+      {cargando ? (
+        <div style={styles.loadingOverlay}>
+          <div style={styles.loadingBox}>
+            <div style={styles.loadingSpinnerWrapper}>
+              <RefreshCw size={36} color="#1d70b8" className="spin-icon" />
+            </div>
+            <p style={styles.loadingTitle}>Espere un momento por favor...</p>
+            <span style={styles.loadingSubtitle}>Actualizando información del sistema</span>
+          </div>
+        </div>
       ) : null}
     </div>
   );
@@ -169,5 +179,51 @@ const styles = {
     fontSize: '0.85rem',
     color: '#64748b',
     marginTop: '0.25rem',
+  },
+  loadingOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    backdropFilter: 'blur(3px)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 999,
+  },
+  loadingBox: {
+    backgroundColor: '#ffffff',
+    borderRadius: '16px',
+    padding: '2rem 2.5rem',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.25)',
+    border: '1px solid #e2e8f0',
+    minWidth: '280px',
+    textAlign: 'center',
+  },
+  loadingSpinnerWrapper: {
+    marginBottom: '1rem',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '64px',
+    height: '64px',
+    borderRadius: '50%',
+    backgroundColor: '#f0f7ff',
+  },
+  loadingTitle: {
+    fontSize: '1.05rem',
+    fontWeight: '700',
+    color: '#002b49',
+    margin: 0,
+  },
+  loadingSubtitle: {
+    fontSize: '0.8rem',
+    color: '#64748b',
+    marginTop: '0.35rem',
   },
 };
