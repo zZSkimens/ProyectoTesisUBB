@@ -14,7 +14,7 @@ export const LoginPage = () => {
     e.preventDefault();
     setErrorLocal('');
 
-    if (!email.trim()) {
+if (!email.trim()) {
       setErrorLocal('Por favor ingrese su correo institucional');
       return;
     }
@@ -38,24 +38,21 @@ export const LoginPage = () => {
   return (
     <div style={styles.container}>
       <div style={styles.loginBox}>
-        
         <div style={styles.brandHeader}>
           <img
-            src="/escudo-ubb.svg"
-            alt="Escudo Universidad del Bío-Bío"
+            src="/logo-ubb-login.png"
+            alt="Universidad del Bío-Bío"
             style={styles.logoUBB}
           />
           <h1 style={styles.title}>Panel de Tutor</h1>
           <p style={styles.subtitle}>Monitoreo y Acompañamiento Estudiantil</p>
         </div>
-
         {errorLocal ? (
           <div style={styles.alertError}>
             <AlertCircle size={18} color="#ef4444" style={{ flexShrink: 0 }} />
             <span>{errorLocal}</span>
           </div>
         ) : null}
-
         <form onSubmit={handleSubmit} style={styles.form}>
           <div style={styles.fieldGroup}>
             <label style={styles.label}>Correo Institucional</label>
@@ -134,10 +131,11 @@ const styles = {
     marginBottom: '2rem',
   },
   logoUBB: {
-    height: '75px',
+    height: '105px',
     width: 'auto',
+    maxWidth: '220px',
     display: 'block',
-    margin: '0 auto 1rem auto',
+    margin: '0 auto 1.25rem auto',
     objectFit: 'contain',
   },
   title: {
