@@ -1,10 +1,17 @@
 import cors from 'cors';
 import express from 'express';
 import morgan from 'morgan';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { config } from './config/env.js';
 import { pool } from '../db/connection.js';
 import apiRouter from './routes/index.js';
 import { manejadorErrores } from './middlewares/error.middleware.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const rutaFrontend = path.resolve(__dirname, '../../tutor-panel/dist');
 
 const app = express();
 
@@ -31,6 +38,16 @@ app.get('/api/status', async (req, res) => {
 });
 
 app.use('/api', apiRouter);
+
+if (fs.existsSync(rutaFrontend)) {
+  app.use(express.static(rutaFrontend));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) {
+      return next();
+    }
+    res.sendFile(path.join(rutaFrontend, 'index.html'));
+  });
+}
 
 app.use(manejadorErrores);
 

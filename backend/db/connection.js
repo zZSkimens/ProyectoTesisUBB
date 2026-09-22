@@ -6,7 +6,7 @@ import * as schema from './schema.js';
 const { Pool } = pg;
 
 export const pool = new Pool({
-  host: process.env.HOST || 'localhost',
+  host: process.env.DB_HOST || 'localhost',
   port: Number(process.env.DB_PORT) || 5432,
   user: process.env.DB_USERNAME || 'postgres',
   password: process.env.PASSWORD || 'postgres',

@@ -1,7 +1,7 @@
 import 'dotenv/config';
 
 export const config = {
-  host: process.env.HOST || 'localhost',
+  host: process.env.HOST || '0.0.0.0',
   port: Number(process.env.PORT) || 3000,
   jwtSecret: process.env.ACCESS_TOKEN_SECRET || 'secreto_por_defecto_jwt',
   cookieKey: process.env.cookieKey || 'llave_por_defecto_cookie',
