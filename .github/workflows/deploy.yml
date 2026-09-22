@@ -1,0 +1,29 @@
+name: Pipeline CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Compilar frontend tutor-panel
+        run: |
+          source ~/.bashrc 2>/dev/null || true
+          cd tutor-panel
+          npm install
+          npm run build
+
+      - name: Desplegar backend con PM2
+        run: |
+          source ~/.bashrc 2>/dev/null || true
+          cd backend
+          npm install
+          cp ~/backend.env ./.env
+          pm2 restart backend-tesis || pm2 start src/index.js --name "backend-tesis"
