@@ -1,6 +1,12 @@
-import { AlertTriangle, Award, CheckCircle2, TrendingUp, Users } from 'lucide-react';
+import type React from 'react';
+import { AlertTriangle, Award, TrendingUp, Users } from 'lucide-react';
+import type { MetricasDashboard } from '../types/index.js';
 
-export const TarjetasMetricas = ({ metricas }) => {
+export interface TarjetasMetricasProps {
+  metricas?: MetricasDashboard | null;
+}
+
+export const TarjetasMetricas: React.FC<TarjetasMetricasProps> = ({ metricas }) => {
   let totalEstudiantes = 0;
   let totalMisiones = 0;
   let promedioAvance = 0;
@@ -15,9 +21,20 @@ export const TarjetasMetricas = ({ metricas }) => {
     alDia = metricas.estudiantesAlDia || 0;
   }
 
+  let helperRiesgo = `${enRiesgo} estudiantes rezagados`;
+  if (enRiesgo === 1) {
+    helperRiesgo = '1 estudiante rezagado';
+  }
+
+  let cardRiesgoEstilo: React.CSSProperties = styles.card;
+  let colorValorRiesgo = '#0f172a';
+  if (enRiesgo > 0) {
+    cardRiesgoEstilo = { ...styles.card, ...styles.cardAlert };
+    colorValorRiesgo = '#ef4444';
+  }
+
   return (
     <div style={styles.grid}>
-      
       <div style={styles.card}>
         <div style={styles.iconContainerBlue}>
           <Users size={24} color="#002b49" />
@@ -59,17 +76,17 @@ export const TarjetasMetricas = ({ metricas }) => {
         </div>
       </div>
 
-      <div style={{ ...styles.card, ...(enRiesgo > 0 ? styles.cardAlert : {}) }}>
+      <div style={cardRiesgoEstilo}>
         <div style={styles.iconContainerRed}>
           <AlertTriangle size={24} color="#ef4444" />
         </div>
         <div style={styles.content}>
           <span style={styles.label}>Requieren Apoyo</span>
-          <h3 style={{ ...styles.value, color: enRiesgo > 0 ? '#ef4444' : '#0f172a' }}>
+          <h3 style={{ ...styles.value, color: colorValorRiesgo }}>
             {enRiesgo}
           </h3>
           <span style={styles.helperText}>
-            {enRiesgo === 1 ? '1 estudiante rezagado' : `${enRiesgo} estudiantes rezagados`}
+            {helperRiesgo}
           </span>
         </div>
       </div>
@@ -77,7 +94,7 @@ export const TarjetasMetricas = ({ metricas }) => {
   );
 };
 
-const styles = {
+const styles: Record<string, React.CSSProperties> = {
   grid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',

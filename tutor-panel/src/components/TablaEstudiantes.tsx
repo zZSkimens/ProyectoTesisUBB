@@ -1,12 +1,21 @@
+import type React from 'react';
 import { useState } from 'react';
 import { ChevronRight, Filter, Search, User } from 'lucide-react';
+import type { Estudiante } from '../types/index.js';
 
-export const TablaEstudiantes = ({ estudiantes, onSelectEstudiante }) => {
-  const [busqueda, setBusqueda] = useState('');
-  const [filtroEstado, setFiltroEstado] = useState('todos');
+export interface TablaEstudiantesProps {
+  estudiantes: Estudiante[];
+  onSelectEstudiante: (id: number) => void;
+}
 
-const estudiantesFiltrados = estudiantes.filter((estudiante) => {
-    
+export const TablaEstudiantes: React.FC<TablaEstudiantesProps> = ({
+  estudiantes,
+  onSelectEstudiante,
+}) => {
+  const [busqueda, setBusqueda] = useState<string>('');
+  const [filtroEstado, setFiltroEstado] = useState<string>('todos');
+
+  const estudiantesFiltrados = estudiantes.filter((estudiante) => {
     const termino = busqueda.toLowerCase().trim();
     let coincideTexto = true;
 
@@ -19,15 +28,36 @@ const estudiantesFiltrados = estudiantes.filter((estudiante) => {
       }
     }
 
-let coincideEstado = true;
+    let coincideEstado = true;
     if (filtroEstado !== 'todos') {
-      if (estudiante.estadoAtencion.toLowerCase() !== filtroEstado.toLowerCase()) {
+      const estadoActual = (estudiante.estadoAtencion || estudiante.estado || '').toLowerCase();
+      if (estadoActual !== filtroEstado.toLowerCase()) {
         coincideEstado = false;
       }
     }
 
     return coincideTexto && coincideEstado;
   });
+
+  let estiloFiltroTodos = styles.filterBtn;
+  if (filtroEstado === 'todos') {
+    estiloFiltroTodos = styles.filterBtnActive;
+  }
+
+  let estiloFiltroAlDia = styles.filterBtn;
+  if (filtroEstado === 'Al dia') {
+    estiloFiltroAlDia = styles.filterBtnActive;
+  }
+
+  let estiloFiltroEnProgreso = styles.filterBtn;
+  if (filtroEstado === 'En progreso') {
+    estiloFiltroEnProgreso = styles.filterBtnActive;
+  }
+
+  let estiloFiltroEnRiesgo = styles.filterBtn;
+  if (filtroEstado === 'En riesgo') {
+    estiloFiltroEnRiesgo = styles.filterBtnActiveRisk;
+  }
 
   return (
     <div style={styles.container}>
@@ -49,25 +79,25 @@ let coincideEstado = true;
           </span>
           <button
             onClick={() => setFiltroEstado('todos')}
-            style={filtroEstado === 'todos' ? styles.filterBtnActive : styles.filterBtn}
+            style={estiloFiltroTodos}
           >
             Todos ({estudiantes.length})
           </button>
           <button
             onClick={() => setFiltroEstado('Al dia')}
-            style={filtroEstado === 'Al dia' ? styles.filterBtnActive : styles.filterBtn}
+            style={estiloFiltroAlDia}
           >
             Al día
           </button>
           <button
             onClick={() => setFiltroEstado('En progreso')}
-            style={filtroEstado === 'En progreso' ? styles.filterBtnActive : styles.filterBtn}
+            style={estiloFiltroEnProgreso}
           >
             En progreso
           </button>
           <button
             onClick={() => setFiltroEstado('En riesgo')}
-            style={filtroEstado === 'En riesgo' ? styles.filterBtnActiveRisk : styles.filterBtn}
+            style={estiloFiltroEnRiesgo}
           >
             En riesgo
           </button>
@@ -94,20 +124,24 @@ let coincideEstado = true;
               </tr>
             ) : (
               estudiantesFiltrados.map((estudiante) => {
-                
+                const avance = estudiante.porcentajeAvance || estudiante.promedioProgreso || 0;
                 let progressClass = 'progress-fill-medium';
-                if (estudiante.porcentajeAvance >= 50) {
+                if (avance >= 50) {
                   progressClass = 'progress-fill-high';
-                } else if (estudiante.porcentajeAvance < 25) {
+                } else if (avance < 25) {
                   progressClass = 'progress-fill-low';
                 }
 
-let badgeClass = 'badge-en-progreso';
-                if (estudiante.estadoAtencion === 'Al dia') {
+                const estado = estudiante.estadoAtencion || estudiante.estado || 'En progreso';
+                let badgeClass = 'badge-en-progreso';
+                if (estado === 'Al dia') {
                   badgeClass = 'badge-al-dia';
-                } else if (estudiante.estadoAtencion === 'En riesgo') {
+                } else if (estado === 'En riesgo') {
                   badgeClass = 'badge-en-riesgo';
                 }
+
+                const completadas = estudiante.misionesCompletadas || 0;
+                const total = estudiante.totalMisiones || 0;
 
                 return (
                   <tr key={estudiante.id} style={styles.tr}>
@@ -124,7 +158,7 @@ let badgeClass = 'badge-en-progreso';
                     </td>
                     <td style={styles.td}>
                       <span style={styles.missionsCount}>
-                        <strong>{estudiante.misionesCompletadas}</strong> de {estudiante.totalMisiones}
+                        <strong>{completadas}</strong> de {total}
                       </span>
                     </td>
                     <td style={styles.td}>
@@ -132,14 +166,14 @@ let badgeClass = 'badge-en-progreso';
                         <div className="progress-bar-container" style={{ width: '110px' }}>
                           <div
                             className={`progress-bar-fill ${progressClass}`}
-                            style={{ width: `${estudiante.porcentajeAvance}%` }}
+                            style={{ width: `${avance}%` }}
                           />
                         </div>
-                        <span style={styles.progressPercent}>{estudiante.porcentajeAvance}%</span>
+                        <span style={styles.progressPercent}>{avance}%</span>
                       </div>
                     </td>
                     <td style={styles.td}>
-                      <span className={`badge ${badgeClass}`}>{estudiante.estadoAtencion}</span>
+                      <span className={`badge ${badgeClass}`}>{estado}</span>
                     </td>
                     <td style={{ ...styles.td, textAlign: 'right' }}>
                       <button
@@ -162,7 +196,7 @@ let badgeClass = 'badge-en-progreso';
   );
 };
 
-const styles = {
+const styles: Record<string, React.CSSProperties> = {
   container: {
     backgroundColor: '#ffffff',
     borderRadius: '12px',

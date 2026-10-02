@@ -1,22 +1,24 @@
+import type React from 'react';
 import { useEffect, useState } from 'react';
-import { BookOpen, RefreshCw } from 'lucide-react';
-import { tutoresApi } from '../api/tutores.api.js';
-import { ModalEstudiante } from '../components/ModalEstudiante.jsx';
-import { Navbar } from '../components/Navbar.jsx';
-import { TablaEstudiantes } from '../components/TablaEstudiantes.jsx';
-import { TarjetasMetricas } from '../components/TarjetasMetricas.jsx';
-import { useAuth } from '../context/AuthContext.jsx';
+import { RefreshCw } from 'lucide-react';
+import { tutoresApi } from '../api/tutores.api';
+import { ModalEstudiante } from '../components/ModalEstudiante';
+import { Navbar } from '../components/Navbar';
+import { TablaEstudiantes } from '../components/TablaEstudiantes';
+import { TarjetasMetricas } from '../components/TarjetasMetricas';
+import { useAuth } from '../context/AuthContext';
+import type { Estudiante, MetricasDashboard } from '../types/index';
 
-export const DashboardPage = () => {
+export const DashboardPage: React.FC = () => {
   const { usuario } = useAuth();
 
-  const [metricas, setMetricas] = useState(null);
-  const [estudiantes, setEstudiantes] = useState([]);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState(null);
-  const [estudianteModalId, setEstudianteModalId] = useState(null);
+  const [metricas, setMetricas] = useState<MetricasDashboard | null>(null);
+  const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
+  const [cargando, setCargando] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [estudianteModalId, setEstudianteModalId] = useState<number | null>(null);
 
-const cargarDatos = async () => {
+  const cargarDatos = async () => {
     setCargando(true);
     setError(null);
 
@@ -29,7 +31,7 @@ const cargarDatos = async () => {
 
       setMetricas(resDashboard.metricas);
       setEstudiantes(resEstudiantes.estudiantes);
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message || 'Error al cargar la informacion del panel');
     } finally {
       setCargando(false);
@@ -43,6 +45,11 @@ const cargarDatos = async () => {
   let nombreTutor = 'Tutor';
   if (usuario && usuario.nombre) {
     nombreTutor = usuario.nombre;
+  }
+
+  let iconoRefrescarClase = '';
+  if (cargando) {
+    iconoRefrescarClase = 'spin-icon';
   }
 
   return (
@@ -65,7 +72,7 @@ const cargarDatos = async () => {
             style={styles.refreshBtn}
             title="Actualizar datos"
           >
-            <RefreshCw size={16} className={cargando ? 'spin-icon' : ''} />
+            <RefreshCw size={16} className={iconoRefrescarClase} />
             <span>Actualizar</span>
           </button>
         </div>
@@ -88,7 +95,7 @@ const cargarDatos = async () => {
         </div>
         <TablaEstudiantes
           estudiantes={estudiantes}
-          onSelectEstudiante={(id) => setEstudianteModalId(id)}
+          onSelectEstudiante={(id: number) => setEstudianteModalId(id)}
         />
       </main>
       {estudianteModalId ? (
@@ -112,7 +119,7 @@ const cargarDatos = async () => {
   );
 };
 
-const styles = {
+const styles: Record<string, React.CSSProperties> = {
   page: {
     minHeight: '100vh',
     backgroundColor: '#f8fafc',

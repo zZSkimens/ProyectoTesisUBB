@@ -1,21 +1,25 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import { authApi } from '../api/auth.api.js';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { authApi } from '../api/auth.api';
+import type { Usuario, AuthContextType } from '../types/index';
 
-const AuthContext = createContext(null);
+const AuthContext = createContext<AuthContextType | null>(null);
 
-export const AuthProvider = ({ children }) => {
-  
+export interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export const AuthProvider = ({ children }: AuthProviderProps) => {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('token');
     localStorage.removeItem('usuario');
   }
 
-  const [usuario, setUsuario] = useState(() => {
+  const [usuario, setUsuario] = useState<Usuario | null>(() => {
     const usuarioGuardado = sessionStorage.getItem('usuario');
     if (usuarioGuardado) {
       try {
-        return JSON.parse(usuarioGuardado);
-      } catch (error) {
+        return JSON.parse(usuarioGuardado) as Usuario;
+      } catch {
         return null;
       }
     } else {
@@ -23,7 +27,7 @@ export const AuthProvider = ({ children }) => {
     }
   });
 
-  const [token, setToken] = useState(() => {
+  const [token, setToken] = useState<string | null>(() => {
     const tokenGuardado = sessionStorage.getItem('token');
     if (tokenGuardado) {
       return tokenGuardado;
@@ -32,8 +36,8 @@ export const AuthProvider = ({ children }) => {
     }
   });
 
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState(null);
+  const [cargando, setCargando] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function verificarSesion() {
@@ -48,7 +52,7 @@ export const AuthProvider = ({ children }) => {
         const data = await authApi.obtenerPerfil();
         setUsuario(data.usuario);
         sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
-      } catch (err) {
+      } catch (err: any) {
         console.warn('[AUTH] Sesion expirada o invalida:', err.message);
         cerrarSesion();
       } finally {
@@ -59,7 +63,7 @@ export const AuthProvider = ({ children }) => {
     verificarSesion();
   }, []);
 
-  const iniciarSesion = async (email, password) => {
+  const iniciarSesion = async (email: string, password: string): Promise<Usuario> => {
     setError(null);
     try {
       const data = await authApi.login(email, password);
@@ -71,7 +75,7 @@ export const AuthProvider = ({ children }) => {
       sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
 
       return data.usuario;
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message);
       throw err;
     }
@@ -102,7 +106,7 @@ export const AuthProvider = ({ children }) => {
     esAdmin = true;
   }
 
-  const valor = {
+  const valor: AuthContextType = {
     usuario,
     token,
     cargando,
@@ -117,7 +121,7 @@ export const AuthProvider = ({ children }) => {
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = () => {
+export const useAuth = (): AuthContextType => {
   const contexto = useContext(AuthContext);
   if (!contexto) {
     throw new Error('useAuth debe ser utilizado dentro de un AuthProvider');

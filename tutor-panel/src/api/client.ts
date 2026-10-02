@@ -1,11 +1,13 @@
-
 const BASE_URL = '/api';
 
-export async function apiClient(endpoint, { body, ...customConfig } = {}) {
-  
+export interface RequestConfig extends RequestInit {
+  body?: any;
+}
+
+export async function apiClient<T = any>(endpoint: string, { body, ...customConfig }: RequestConfig = {}): Promise<T> {
   const token = sessionStorage.getItem('token');
 
-  const headers = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
 
@@ -18,12 +20,12 @@ export async function apiClient(endpoint, { body, ...customConfig } = {}) {
     metodoHttp = 'POST';
   }
 
-  const config = {
+  const config: RequestInit = {
     method: metodoHttp,
     ...customConfig,
     headers: {
       ...headers,
-      ...customConfig.headers,
+      ...(customConfig.headers as Record<string, string>),
     },
   };
 
@@ -34,7 +36,7 @@ export async function apiClient(endpoint, { body, ...customConfig } = {}) {
   try {
     const response = await fetch(`${BASE_URL}${endpoint}`, config);
 
-    let data = null;
+    let data: any = null;
     try {
       data = await response.json();
     } catch {
@@ -42,7 +44,6 @@ export async function apiClient(endpoint, { body, ...customConfig } = {}) {
     }
 
     if (!response.ok) {
-      
       if (response.status === 401 && !endpoint.includes('/auth/login')) {
         sessionStorage.removeItem('token');
         sessionStorage.removeItem('usuario');
@@ -58,8 +59,8 @@ export async function apiClient(endpoint, { body, ...customConfig } = {}) {
       throw new Error(mensajeError);
     }
 
-    return data;
-  } catch (error) {
+    return data as T;
+  } catch (error: any) {
     console.error(`[ERROR API] ${endpoint}:`, error.message);
     throw error;
   }

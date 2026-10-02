@@ -1,13 +1,20 @@
+import type React from 'react';
 import { useEffect, useState } from 'react';
-import { Award, Calendar, CheckCircle2, Clock, MapPin, X } from 'lucide-react';
-import { tutoresApi } from '../api/tutores.api.js';
+import { Award, Calendar, Clock, X } from 'lucide-react';
+import { tutoresApi } from '../api/tutores.api';
+import type { DetalleEstudianteResponse } from '../types/index';
 
-export const ModalEstudiante = ({ estudianteId, onClose }) => {
-  const [detalle, setDetalle] = useState(null);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState(null);
+export interface ModalEstudianteProps {
+  estudianteId: number | null;
+  onClose: () => void;
+}
 
-useEffect(() => {
+export const ModalEstudiante: React.FC<ModalEstudianteProps> = ({ estudianteId, onClose }) => {
+  const [detalle, setDetalle] = useState<DetalleEstudianteResponse | null>(null);
+  const [cargando, setCargando] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
     async function cargarFicha() {
       if (!estudianteId) {
         return;
@@ -19,7 +26,7 @@ useEffect(() => {
       try {
         const data = await tutoresApi.obtenerDetalleEstudiante(estudianteId);
         setDetalle(data);
-      } catch (err) {
+      } catch (err: any) {
         setError(err.message || 'No se pudo cargar la ficha del estudiante');
       } finally {
         setCargando(false);
@@ -29,8 +36,8 @@ useEffect(() => {
     cargarFicha();
   }, [estudianteId]);
 
-useEffect(() => {
-    const handleKeyDown = (e) => {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         onClose();
       }
@@ -91,7 +98,9 @@ useEffect(() => {
                   </div>
                   <div style={styles.detailItemLast}>
                     <span style={styles.detailLabel}>Año de Ingreso</span>
-                    <strong style={styles.detailValue}>{detalle.estudiante.añoIngreso}</strong>
+                    <strong style={styles.detailValue}>
+                      {detalle.estudiante.añoIngreso || detalle.estudiante.anioIngreso || 2026}
+                    </strong>
                   </div>
                 </div>
               </div>
@@ -169,7 +178,7 @@ useEffect(() => {
   );
 };
 
-const styles = {
+const styles: Record<string, React.CSSProperties> = {
   overlay: {
     position: 'fixed',
     top: 0,

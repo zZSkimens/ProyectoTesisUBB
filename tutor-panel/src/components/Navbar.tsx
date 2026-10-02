@@ -1,15 +1,16 @@
+import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { LogOut, Menu, User, UserCheck } from 'lucide-react';
-import { useAuth } from '../context/AuthContext.jsx';
-import { ModalPerfilTutor } from './ModalPerfilTutor.jsx';
+import { useAuth } from '../context/AuthContext';
+import { ModalPerfilTutor } from './ModalPerfilTutor';
 
-export const Navbar = () => {
+export const Navbar: React.FC = () => {
   const { usuario, cerrarSesion } = useAuth();
-  const [menuAbierto, setMenuAbierto] = useState(false);
-  const [modalPerfilAbierto, setModalPerfilAbierto] = useState(false);
-  const menuRef = useRef(null);
+  const [menuAbierto, setMenuAbierto] = useState<boolean>(false);
+  const [modalPerfilAbierto, setModalPerfilAbierto] = useState<boolean>(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
-const [fotoPerfil, setFotoPerfil] = useState(() => {
+  const [fotoPerfil, setFotoPerfil] = useState<string | null>(() => {
     let key = 'tutor_foto_perfil_default';
     if (usuario && usuario.id) {
       key = 'tutor_foto_perfil_' + usuario.id;
@@ -21,9 +22,9 @@ const [fotoPerfil, setFotoPerfil] = useState(() => {
     return null;
   });
 
-useEffect(() => {
-    const handleClickAfuera = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
+  useEffect(() => {
+    const handleClickAfuera = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setMenuAbierto(false);
       }
     };
@@ -40,6 +41,11 @@ useEffect(() => {
     if (partes.length > 0 && partes[0]) {
       nombreTutor = partes[0];
     }
+  }
+
+  let estiloBotonMenu = styles.menuBtn;
+  if (menuAbierto) {
+    estiloBotonMenu = styles.menuBtnActive;
   }
 
   return (
@@ -72,7 +78,7 @@ useEffect(() => {
             <div style={styles.menuWrapper}>
               <button
                 onClick={() => setMenuAbierto(!menuAbierto)}
-                style={menuAbierto ? styles.menuBtnActive : styles.menuBtn}
+                style={estiloBotonMenu}
                 title="Menú de opciones"
                 aria-label="Menú de opciones"
                 aria-expanded={menuAbierto}
@@ -114,7 +120,7 @@ useEffect(() => {
         <ModalPerfilTutor
           usuario={usuario}
           fotoPerfil={fotoPerfil}
-          onFotoActualizada={(nuevaFoto) => setFotoPerfil(nuevaFoto)}
+          onFotoActualizada={(nuevaFoto: string | null) => setFotoPerfil(nuevaFoto)}
           onClose={() => setModalPerfilAbierto(false)}
         />
       ) : null}
@@ -122,7 +128,7 @@ useEffect(() => {
   );
 };
 
-const styles = {
+const styles: Record<string, React.CSSProperties> = {
   header: {
     backgroundColor: '#002b49',
     color: '#ffffff',

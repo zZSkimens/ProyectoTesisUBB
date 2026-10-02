@@ -1,8 +1,9 @@
-import { useAuth } from './context/AuthContext.jsx';
-import { DashboardPage } from './pages/DashboardPage.jsx';
-import { LoginPage } from './pages/LoginPage.jsx';
+import type React from 'react';
+import { useAuth } from './context/AuthContext';
+import { DashboardPage } from './pages/DashboardPage';
+import { LoginPage } from './pages/LoginPage';
 
-export default function App() {
+export default function App(): React.JSX.Element {
   const { estaAutenticado, cargando, usuario, cerrarSesion } = useAuth();
 
   if (cargando) {
@@ -37,7 +38,7 @@ export default function App() {
   return <DashboardPage />;
 }
 
-const styles = {
+const styles: Record<string, React.CSSProperties> = {
   loadingScreen: {
     minHeight: '100vh',
     display: 'flex',

@@ -1,14 +1,28 @@
+import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { Camera, Trash2, Upload, User, X } from 'lucide-react';
+import { Camera, Trash2, User, X } from 'lucide-react';
+import type { Usuario } from '../types/index.js';
 
-export const ModalPerfilTutor = ({ usuario, fotoPerfil, onFotoActualizada, onClose }) => {
-  const [foto, setFoto] = useState(fotoPerfil);
-  const [mensajeExito, setMensajeExito] = useState(null);
-  const [errorArchivo, setErrorArchivo] = useState(null);
-  const fileInputRef = useRef(null);
+export interface ModalPerfilTutorProps {
+  usuario: Usuario | null;
+  fotoPerfil: string | null;
+  onFotoActualizada: (nuevaFoto: string | null) => void;
+  onClose: () => void;
+}
 
-useEffect(() => {
-    const handleKeyDown = (e) => {
+export const ModalPerfilTutor: React.FC<ModalPerfilTutorProps> = ({
+  usuario,
+  fotoPerfil,
+  onFotoActualizada,
+  onClose,
+}) => {
+  const [foto, setFoto] = useState<string | null>(fotoPerfil);
+  const [mensajeExito, setMensajeExito] = useState<string | null>(null);
+  const [errorArchivo, setErrorArchivo] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         onClose();
       }
@@ -18,7 +32,7 @@ useEffect(() => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
-const handleSeleccionarArchivo = (e) => {
+  const handleSeleccionarArchivo = (e: React.ChangeEvent<HTMLInputElement>) => {
     setErrorArchivo(null);
     setMensajeExito(null);
 
@@ -27,40 +41,42 @@ const handleSeleccionarArchivo = (e) => {
       return;
     }
 
-const formatosPermitidos = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    const formatosPermitidos = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
     if (!formatosPermitidos.includes(archivo.type.toLowerCase())) {
       setErrorArchivo('Formato no valido. Por favor seleccione un archivo PNG, JPG o WEBP.');
       return;
     }
 
-const tamanoMaximoBytes = 5 * 1024 * 1024;
+    const tamanoMaximoBytes = 5 * 1024 * 1024;
     if (archivo.size > tamanoMaximoBytes) {
       setErrorArchivo('La imagen supera el limite maximo de 5 MB.');
       return;
     }
 
     const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target.result;
-      setFoto(dataUrl);
+    reader.onload = (event: ProgressEvent<FileReader>) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) {
+        setFoto(dataUrl);
 
-let storageKey = 'tutor_foto_perfil_default';
-      if (usuario && usuario.id) {
-        storageKey = 'tutor_foto_perfil_' + usuario.id;
+        let storageKey = 'tutor_foto_perfil_default';
+        if (usuario && usuario.id) {
+          storageKey = 'tutor_foto_perfil_' + usuario.id;
+        }
+        localStorage.setItem(storageKey, dataUrl);
+
+        if (onFotoActualizada) {
+          onFotoActualizada(dataUrl);
+        }
+
+        setMensajeExito('Foto de perfil actualizada correctamente.');
       }
-      localStorage.setItem(storageKey, dataUrl);
-
-      if (onFotoActualizada) {
-        onFotoActualizada(dataUrl);
-      }
-
-      setMensajeExito('Foto de perfil actualizada correctamente.');
     };
 
     reader.readAsDataURL(archivo);
   };
 
-const handleEliminarFoto = () => {
+  const handleEliminarFoto = () => {
     setFoto(null);
     setMensajeExito(null);
     setErrorArchivo(null);
@@ -204,7 +220,7 @@ const handleEliminarFoto = () => {
   );
 };
 
-const styles = {
+const styles: Record<string, React.CSSProperties> = {
   overlay: {
     position: 'fixed',
     top: 0,

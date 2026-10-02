@@ -1,20 +1,21 @@
+import type React from 'react';
 import { useState } from 'react';
 import { AlertCircle, ArrowRight, Lock, Mail } from 'lucide-react';
-import { useAuth } from '../context/AuthContext.jsx';
+import { useAuth } from '../context/AuthContext.js';
 
-export const LoginPage = () => {
+export const LoginPage: React.FC = () => {
   const { iniciarSesion } = useAuth();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [cargando, setCargando] = useState(false);
-  const [errorLocal, setErrorLocal] = useState('');
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [cargando, setCargando] = useState<boolean>(false);
+  const [errorLocal, setErrorLocal] = useState<string>('');
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrorLocal('');
 
-if (!email.trim()) {
+    if (!email.trim()) {
       setErrorLocal('Por favor ingrese su correo institucional');
       return;
     }
@@ -28,12 +29,22 @@ if (!email.trim()) {
 
     try {
       await iniciarSesion(email, password);
-    } catch (err) {
+    } catch (err: any) {
       setErrorLocal(err.message || 'Credenciales invalidas. Intente nuevamente.');
     } finally {
       setCargando(false);
     }
   };
+
+  let textoBoton = (
+    <>
+      <span>Ingresar al Panel</span>
+      <ArrowRight size={18} />
+    </>
+  );
+  if (cargando) {
+    textoBoton = <span>Iniciando sesion...</span>;
+  }
 
   return (
     <div style={styles.container}>
@@ -91,14 +102,7 @@ if (!email.trim()) {
             className="btn-primary"
             style={styles.submitBtn}
           >
-            {cargando ? (
-              <span>Iniciando sesion...</span>
-            ) : (
-              <>
-                <span>Ingresar al Panel</span>
-                <ArrowRight size={18} />
-              </>
-            )}
+            {textoBoton}
           </button>
         </form>
       </div>
@@ -106,7 +110,7 @@ if (!email.trim()) {
   );
 };
 
-const styles = {
+const styles: Record<string, React.CSSProperties> = {
   container: {
     minHeight: '100vh',
     display: 'flex',
