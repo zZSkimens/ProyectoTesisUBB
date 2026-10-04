@@ -1,5 +1,11 @@
+import type { Request, Response, NextFunction } from 'express';
 
-export const manejadorErrores = (err, req, res, next) => {
+export const manejadorErrores = (
+  err: any,
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
   console.error('[ERROR NO CONTROLADO]:', err);
 
   const status = err.status || 500;

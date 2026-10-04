@@ -13,7 +13,7 @@ export const pool = new Pool({
   database: process.env.DATABASE || 'tesis',
 });
 
-pool.on('error', (err) => {
+pool.on('error', (err: Error) => {
   console.error('[ERROR] Problema inesperado en el pool de PostgreSQL:', err);
 });
 

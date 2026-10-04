@@ -1,6 +1,14 @@
 import 'dotenv/config';
 
-export const config = {
+export interface AppConfig {
+  host: string;
+  port: number;
+  jwtSecret: string;
+  cookieKey: string;
+  nodeEnv: string;
+}
+
+export const config: AppConfig = {
   host: process.env.HOST || '0.0.0.0',
   port: Number(process.env.PORT) || 3000,
   jwtSecret: process.env.ACCESS_TOKEN_SECRET || 'secreto_por_defecto_jwt',

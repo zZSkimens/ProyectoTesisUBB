@@ -5,10 +5,18 @@ import { db } from '../../db/connection.js';
 import { usuarios } from '../../db/schema.js';
 import { config } from '../config/env.js';
 
+export interface LoginResult {
+  token: string;
+  usuario: {
+    id: number;
+    nombre: string;
+    email: string;
+    rol: string;
+  };
+}
+
 export const authService = {
-  
-  async login(email, password) {
-    
+  async login(email: string, password: string): Promise<LoginResult> {
     const [usuario] = await db
       .select()
       .from(usuarios)
@@ -36,7 +44,7 @@ export const authService = {
     };
 
     const token = jwt.sign(payload, config.jwtSecret, {
-      expiresIn: '24h', 
+      expiresIn: '24h',
     });
 
     return {
@@ -45,7 +53,7 @@ export const authService = {
     };
   },
 
-  async obtenerPerfil(usuarioId) {
+  async obtenerPerfil(usuarioId: number) {
     const [usuario] = await db
       .select({
         id: usuarios.id,

@@ -1,5 +1,5 @@
 import cors from 'cors';
-import express from 'express';
+import express, { type Request, type Response, type NextFunction } from 'express';
 import morgan from 'morgan';
 import fs from 'fs';
 import path from 'path';
@@ -19,7 +19,7 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
 
-app.get('/api/status', async (req, res) => {
+app.get('/api/status', async (req: Request, res: Response) => {
   try {
     const dbCheck = await pool.query('SELECT NOW() as current_time');
     res.json({
@@ -28,7 +28,7 @@ app.get('/api/status', async (req, res) => {
       horaServidor: dbCheck.rows[0].current_time,
       entorno: config.nodeEnv,
     });
-  } catch (error) {
+  } catch (error: any) {
     res.status(500).json({
       status: 'error',
       mensaje: 'Error de conexion con la base de datos',
@@ -41,7 +41,7 @@ app.use('/api', apiRouter);
 
 if (fs.existsSync(rutaFrontend)) {
   app.use(express.static(rutaFrontend));
-  app.get('*', (req, res, next) => {
+  app.get('*', (req: Request, res: Response, next: NextFunction) => {
     if (req.path.startsWith('/api')) {
       return next();
     }

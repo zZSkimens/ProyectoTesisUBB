@@ -5,8 +5,8 @@ import { validarLogin } from '../validations/auth.validation.js';
 
 const router = Router();
 
-router.post('/login', validarLogin, authController.login);
+router.post('/login', validarLogin as any, authController.login);
 
-router.get('/perfil', verificarToken, authController.perfil);
+router.get('/perfil', verificarToken as any, authController.perfil);
 
 export default router;

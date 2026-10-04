@@ -1,5 +1,6 @@
+import type { Request, Response, NextFunction } from 'express';
 
-export const validarLogin = (req, res, next) => {
+export const validarLogin = (req: Request, res: Response, next: NextFunction): void | Response => {
   const { email, password } = req.body;
 
   if (!email || typeof email !== 'string') {

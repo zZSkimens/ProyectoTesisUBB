@@ -1,34 +1,46 @@
+import type { Request, Response } from 'express';
 import { tutoresService } from '../services/tutores.service.js';
 
 export const tutoresController = {
-  
-  async dashboard(req, res) {
+  async dashboard(req: Request, res: Response): Promise<void> {
     try {
+      if (!req.usuario) {
+        res.status(401).json({ error: 'No autenticado' });
+        return;
+      }
       const metricas = await tutoresService.obtenerDashboard(req.usuario.id);
       res.json({ metricas });
-    } catch (error) {
+    } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   },
 
-  async listarEstudiantes(req, res) {
+  async listarEstudiantes(req: Request, res: Response): Promise<void> {
     try {
+      if (!req.usuario) {
+        res.status(401).json({ error: 'No autenticado' });
+        return;
+      }
       const estudiantes = await tutoresService.listarEstudiantes(req.usuario.id);
       res.json({ estudiantes });
-    } catch (error) {
+    } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   },
 
-  async detalleEstudiante(req, res) {
+  async detalleEstudiante(req: Request, res: Response): Promise<void> {
     try {
+      if (!req.usuario) {
+        res.status(401).json({ error: 'No autenticado' });
+        return;
+      }
       const detalle = await tutoresService.obtenerDetalleEstudiante(
         req.usuario.id,
-        req.params.id
+        Number(req.params.id)
       );
 
       res.json(detalle);
-    } catch (error) {
+    } catch (error: any) {
       let statusCode = 500;
       if (error.message.includes('no encontrado')) {
         statusCode = 404;

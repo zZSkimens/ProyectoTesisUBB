@@ -6,7 +6,6 @@ async function seed() {
   console.log('[INFO] Iniciando carga de datos iniciales...');
 
   try {
-    
     const passwordHash = await bcrypt.hash('tutor123', 10);
     const [tutor] = await db
       .insert(usuarios)
@@ -15,7 +14,7 @@ async function seed() {
         email: 'rodrigo.fuentes2401@alumnos.ubiobio.cl',
         passwordHash,
         rol: 'tutor',
-        activo: true, 
+        activo: true,
       })
       .onConflictDoNothing()
       .returning();

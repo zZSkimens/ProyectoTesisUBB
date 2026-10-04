@@ -1,5 +1,6 @@
+import type { Request, Response, NextFunction } from 'express';
 
-export const validarIdEstudiante = (req, res, next) => {
+export const validarIdEstudiante = (req: Request, res: Response, next: NextFunction): void | Response => {
   const { id } = req.params;
   const idNumero = Number(id);
 
@@ -7,6 +8,6 @@ export const validarIdEstudiante = (req, res, next) => {
     return res.status(400).json({ error: 'El ID de estudiante debe ser un numero entero positivo' });
   }
 
-  req.params.id = idNumero;
+  req.params.id = String(idNumero);
   next();
 };

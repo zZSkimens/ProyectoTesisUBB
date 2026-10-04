@@ -3,9 +3,7 @@ import { db } from '../../db/connection.js';
 import { estudiantes, misiones, progresoEstudiantes } from '../../db/schema.js';
 
 export const tutoresService = {
-  
-  async obtenerDashboard(tutorId) {
-    
+  async obtenerDashboard(tutorId: number) {
     const alumnos = await db
       .select()
       .from(estudiantes)
@@ -70,8 +68,7 @@ export const tutoresService = {
     };
   },
 
-  async listarEstudiantes(tutorId) {
-    
+  async listarEstudiantes(tutorId: number) {
     const alumnos = await db
       .select()
       .from(estudiantes)
@@ -120,8 +117,7 @@ export const tutoresService = {
     });
   },
 
-  async obtenerDetalleEstudiante(tutorId, estudianteId) {
-    
+  async obtenerDetalleEstudiante(tutorId: number, estudianteId: number | string) {
     const [alumno] = await db
       .select()
       .from(estudiantes)
@@ -144,7 +140,7 @@ export const tutoresService = {
       let estado = 'pendiente';
       let puntajeObtenido = 0;
       let intentos = 0;
-      let fechaCompletado = null;
+      let fechaCompletado: Date | null = null;
 
       if (registroProgreso) {
         estado = registroProgreso.estado;
