@@ -26,13 +26,21 @@ export const verificarToken = (req: Request, res: Response, next: NextFunction):
   }
 };
 
-export const requiereRol = (rolRequerido: string) => {
+export const requiereRol = (...rolesPermitidos: string[]) => {
   return (req: Request, res: Response, next: NextFunction): void | Response => {
-    if (!req.usuario || req.usuario.rol !== rolRequerido) {
-      return res.status(403).json({
-        error: `Acceso denegado: se requiere el rol de ${rolRequerido}`,
+    if (!req.usuario) {
+      return res.status(401).json({
+        error: 'Acceso no autorizado: sesion no valida',
       });
     }
+
+    if (!rolesPermitidos.includes(req.usuario.rol)) {
+      return res.status(403).json({
+        error: `Acceso denegado: se requiere uno de los siguientes roles: ${rolesPermitidos.join(', ')}`,
+      });
+    }
+
     next();
   };
 };
+

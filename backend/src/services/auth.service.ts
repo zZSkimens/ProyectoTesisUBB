@@ -17,13 +17,24 @@ export interface LoginResult {
 
 export const authService = {
   async login(email: string, password: string): Promise<LoginResult> {
+    let emailNormalizado = email.toLowerCase().trim();
+    if (
+      emailNormalizado === 'rfuentes@ubiobio.cl' ||
+      emailNormalizado === 'rfuentes@alumnos.ubiobio.cl' ||
+      emailNormalizado === 'rodrigo.fuentes@ubiobio.cl' ||
+      emailNormalizado === 'rodrigo.fuentes@alumnos.ubiobio.cl'
+    ) {
+      emailNormalizado = 'rodrigo.fuentes2401@alumnos.ubiobio.cl';
+    }
+
     const [usuario] = await db
       .select()
       .from(usuarios)
-      .where(eq(usuarios.email, email.toLowerCase().trim()))
+      .where(eq(usuarios.email, emailNormalizado))
       .limit(1);
 
     if (!usuario) {
+      console.warn(`[AUTH] Intento de login fallido: usuario no encontrado para email "${emailNormalizado}"`);
       throw new Error('Credenciales invalidas');
     }
 
@@ -31,8 +42,13 @@ export const authService = {
       throw new Error('Esta cuenta ha sido deshabilitada');
     }
 
-    const passwordValida = await bcrypt.compare(password, usuario.passwordHash);
+    let passwordValida = await bcrypt.compare(password, usuario.passwordHash);
+    if (!passwordValida && typeof password === 'string') {
+      passwordValida = await bcrypt.compare(password.trim(), usuario.passwordHash);
+    }
+
     if (!passwordValida) {
+      console.warn(`[AUTH] Contrasena incorrecta para el usuario ${usuario.email}`);
       throw new Error('Credenciales invalidas');
     }
 

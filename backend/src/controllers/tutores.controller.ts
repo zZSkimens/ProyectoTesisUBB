@@ -28,6 +28,19 @@ export const tutoresController = {
     }
   },
 
+  async listarActividades(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.usuario) {
+        res.status(401).json({ error: 'No autenticado' });
+        return;
+      }
+      const actividades = await tutoresService.obtenerResumenActividades(req.usuario.id);
+      res.json({ actividades });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+
   async detalleEstudiante(req: Request, res: Response): Promise<void> {
     try {
       if (!req.usuario) {

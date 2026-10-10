@@ -38,6 +38,17 @@ export const tutoresService = {
     let sumaPorcentajes = 0;
     let enRiesgoCount = 0;
     let alDiaCount = 0;
+    const alertas: Array<{
+      id: string;
+      tipo: 'estudiante_riesgo' | 'actividad_critica';
+      titulo: string;
+      descripcion: string;
+      nivel: 'critico' | 'advertencia';
+      estudianteId?: number;
+      estudianteNombre?: string;
+      misionId?: number;
+      porcentaje?: number;
+    }> = [];
 
     for (const alumno of alumnos) {
       const completadas = progresosGrupo.filter(
@@ -52,8 +63,41 @@ export const tutoresService = {
 
       if (porcentaje < 25) {
         enRiesgoCount++;
+        alertas.push({
+          id: `riesgo-${alumno.id}`,
+          tipo: 'estudiante_riesgo',
+          titulo: `${alumno.nombre} requiere apoyo temprano`,
+          descripcion: `Ha completado solo un ${porcentaje}% de las actividades de inducción (${completadas} de ${totalMisiones}).`,
+          nivel: 'critico',
+          estudianteId: alumno.id,
+          estudianteNombre: alumno.nombre,
+          porcentaje,
+        });
       } else if (porcentaje >= 50) {
         alDiaCount++;
+      }
+    }
+
+    for (const mision of misionesActivas) {
+      const completadasMision = progresosGrupo.filter(
+        (p) => p.misionId === mision.id && p.estado === 'completada'
+      ).length;
+
+      let porcentajeMision = 0;
+      if (totalEstudiantes > 0) {
+        porcentajeMision = Math.round((completadasMision / totalEstudiantes) * 100);
+      }
+
+      if (totalEstudiantes > 0 && porcentajeMision < 40) {
+        alertas.push({
+          id: `actividad-${mision.id}`,
+          tipo: 'actividad_critica',
+          titulo: `Baja participación en "${mision.titulo}"`,
+          descripcion: `Solo el ${porcentajeMision}% de la cohorte (${completadasMision}/${totalEstudiantes}) ha completado esta actividad del módulo ${mision.modulo}.`,
+          nivel: 'advertencia',
+          misionId: mision.id,
+          porcentaje: porcentajeMision,
+        });
       }
     }
 
@@ -65,7 +109,84 @@ export const tutoresService = {
       promedioAvanceGrupal,
       estudiantesEnRiesgo: enRiesgoCount,
       estudiantesAlDia: alDiaCount,
+      alertas,
     };
+  },
+
+  async obtenerResumenActividades(tutorId: number) {
+    const alumnos = await db
+      .select()
+      .from(estudiantes)
+      .where(eq(estudiantes.tutorId, tutorId));
+
+    const totalEstudiantes = alumnos.length;
+
+    const listaMisiones = await db
+      .select()
+      .from(misiones)
+      .where(eq(misiones.activo, true))
+      .orderBy(misiones.orden);
+
+    const todosProgresos = await db.select().from(progresoEstudiantes);
+    const studentIds = alumnos.map((a) => a.id);
+    const progresosGrupo = todosProgresos.filter((p) =>
+      studentIds.includes(p.estudianteId)
+    );
+
+    return listaMisiones.map((mision) => {
+      const progresosMision = progresosGrupo.filter((p) => p.misionId === mision.id);
+      const completadas = progresosMision.filter((p) => p.estado === 'completada').length;
+      const enProgreso = progresosMision.filter((p) => p.estado === 'en_progreso').length;
+      let noIniciadas = totalEstudiantes - completadas - enProgreso;
+      if (noIniciadas < 0) {
+        noIniciadas = 0;
+      }
+
+      let porcentajeCompletitud = 0;
+      if (totalEstudiantes > 0) {
+        porcentajeCompletitud = Math.round((completadas / totalEstudiantes) * 100);
+      }
+
+      const estudiantesPendientes = alumnos
+        .filter((alumno) => {
+          const prog = progresosMision.find((p) => p.estudianteId === alumno.id);
+          if (!prog || prog.estado !== 'completada') {
+            return true;
+          }
+          return false;
+        })
+        .map((alumno) => {
+          const prog = progresosMision.find((p) => p.estudianteId === alumno.id);
+          let estado = 'pendiente';
+          if (prog) {
+            estado = prog.estado;
+          }
+          return {
+            id: alumno.id,
+            nombre: alumno.nombre,
+            rut: alumno.rut,
+            email: alumno.email,
+            estado,
+          };
+        });
+
+      return {
+        id: mision.id,
+        codigo: mision.codigo,
+        titulo: mision.titulo,
+        descripcion: mision.descripcion,
+        modulo: mision.modulo,
+        tipo: mision.tipo,
+        puntosRecompensa: mision.puntosRecompensa,
+        orden: mision.orden,
+        totalEstudiantes,
+        completadas,
+        enProgreso,
+        noIniciadas,
+        porcentajeCompletitud,
+        estudiantesPendientes,
+      };
+    });
   },
 
   async listarEstudiantes(tutorId: number) {
