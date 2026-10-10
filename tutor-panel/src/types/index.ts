@@ -46,6 +46,44 @@ export interface Estudiante {
   estado?: string;
 }
 
+export interface Alerta {
+  id: string;
+  tipo: 'estudiante_riesgo' | 'actividad_critica';
+  titulo: string;
+  descripcion: string;
+  nivel: 'critico' | 'advertencia';
+  estudianteId?: number;
+  estudianteNombre?: string;
+  misionId?: number;
+  modulo?: string;
+  porcentaje?: number;
+}
+
+export interface EstudiantePendienteActividad {
+  id: number;
+  nombre: string;
+  rut: string;
+  email: string;
+  estado: string;
+}
+
+export interface ActividadResumen {
+  id: number;
+  codigo: string;
+  titulo: string;
+  descripcion: string;
+  modulo: string;
+  tipo: string;
+  puntosRecompensa: number;
+  orden: number;
+  totalEstudiantes: number;
+  completadas: number;
+  enProgreso: number;
+  noIniciadas: number;
+  porcentajeCompletitud: number;
+  estudiantesPendientes: EstudiantePendienteActividad[];
+}
+
 export interface MetricasDashboard {
   totalEstudiantes: number;
   totalMisiones?: number;
@@ -55,6 +93,7 @@ export interface MetricasDashboard {
   misionesCompletadas?: number;
   promedioPuntos?: number;
   estudiantesActivos?: number;
+  alertas?: Alerta[];
 }
 
 export interface MisionDetalleEstudiante {

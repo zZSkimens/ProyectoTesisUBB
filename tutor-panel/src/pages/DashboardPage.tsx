@@ -1,19 +1,23 @@
 import type React from 'react';
 import { useEffect, useState } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Users, Target } from 'lucide-react';
 import { tutoresApi } from '../api/tutores.api';
+import { BannerAlertas } from '../components/BannerAlertas';
 import { ModalEstudiante } from '../components/ModalEstudiante';
 import { Navbar } from '../components/Navbar';
 import { TablaEstudiantes } from '../components/TablaEstudiantes';
 import { TarjetasMetricas } from '../components/TarjetasMetricas';
+import { VistaActividades } from '../components/VistaActividades';
 import { useAuth } from '../context/AuthContext';
-import type { Estudiante, MetricasDashboard } from '../types/index';
+import type { Estudiante, MetricasDashboard, ActividadResumen } from '../types/index';
 
 export const DashboardPage: React.FC = () => {
   const { usuario } = useAuth();
 
   const [metricas, setMetricas] = useState<MetricasDashboard | null>(null);
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
+  const [actividades, setActividades] = useState<ActividadResumen[]>([]);
+  const [pestanaActiva, setPestanaActiva] = useState<'estudiantes' | 'actividades'>('estudiantes');
   const [cargando, setCargando] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [estudianteModalId, setEstudianteModalId] = useState<number | null>(null);
@@ -23,14 +27,16 @@ export const DashboardPage: React.FC = () => {
     setError(null);
 
     try {
-      const [resDashboard, resEstudiantes] = await Promise.all([
+      const [resDashboard, resEstudiantes, resActividades] = await Promise.all([
         tutoresApi.obtenerDashboard(),
         tutoresApi.obtenerEstudiantes(),
-        new Promise((resolve) => setTimeout(resolve, 600)),
+        tutoresApi.obtenerActividades(),
+        new Promise((resolve) => setTimeout(resolve, 500)),
       ]);
 
       setMetricas(resDashboard.metricas);
       setEstudiantes(resEstudiantes.estudiantes);
+      setActividades(resActividades.actividades);
     } catch (err: any) {
       setError(err.message || 'Error al cargar la informacion del panel');
     } finally {
@@ -52,6 +58,8 @@ export const DashboardPage: React.FC = () => {
     iconoRefrescarClase = 'spin-icon';
   }
 
+  let alertasGrupo = metricas && metricas.alertas ? metricas.alertas : [];
+
   return (
     <div style={styles.page}>
       <Navbar />
@@ -61,7 +69,7 @@ export const DashboardPage: React.FC = () => {
             <span style={styles.welcomeTag}>Campus Concepción • Segundo Semestre 2026</span>
             <h2 style={styles.welcomeTitle}>Bienvenido(a), {nombreTutor}</h2>
             <p style={styles.welcomeDesc}>
-              Monitorea en tiempo real la participacion, avance de misiones y necesidades de apoyo de tus estudiantes novatos.
+              Monitorea en tiempo real la participación, avance de misiones y necesidades de apoyo de tus estudiantes novatos.
             </p>
           </div>
 
@@ -76,35 +84,80 @@ export const DashboardPage: React.FC = () => {
             <span>Actualizar</span>
           </button>
         </div>
-        {error ? (
+
+        {error && (
           <div style={styles.errorAlert}>
-            <span>Ocurrio un problema: {error}</span>
-            <button onClick={cargarDatos} className="btn-secondary" style={{ marginLeft: '1rem', padding: '0.3rem 0.6rem' }}>
+            <span>Ocurrió un problema: {error}</span>
+            <button
+              onClick={cargarDatos}
+              className="btn-secondary"
+              style={{ marginLeft: '1rem', padding: '0.3rem 0.6rem' }}
+            >
               Reintentar
             </button>
           </div>
-        ) : null}
-        <TarjetasMetricas metricas={metricas} />
-        <div style={styles.sectionHeader}>
-          <div>
-            <h3 style={styles.sectionTitle}>Nómina de Estudiantes de Primer Año</h3>
-            <p style={styles.sectionSubtitle}>
-              Revisa el porcentaje de avance en los módulos "Presentemos la UBB" y "Caja de herramientas".
-            </p>
-          </div>
-        </div>
-        <TablaEstudiantes
-          estudiantes={estudiantes}
+        )}
+
+        <BannerAlertas
+          alertas={alertasGrupo}
           onSelectEstudiante={(id: number) => setEstudianteModalId(id)}
+          onIrActividades={() => setPestanaActiva('actividades')}
         />
+
+        <TarjetasMetricas metricas={metricas} />
+
+        <div style={styles.tabContainer}>
+          <button
+            onClick={() => setPestanaActiva('estudiantes')}
+            style={pestanaActiva === 'estudiantes' ? styles.tabButtonActive : styles.tabButton}
+          >
+            <Users size={18} />
+            <span>Nómina de Estudiantes ({estudiantes.length})</span>
+          </button>
+
+          <button
+            onClick={() => setPestanaActiva('actividades')}
+            style={pestanaActiva === 'actividades' ? styles.tabButtonActive : styles.tabButton}
+          >
+            <Target size={18} />
+            <span>Actividades de Inducción ({actividades.length})</span>
+          </button>
+        </div>
+
+        {pestanaActiva === 'estudiantes' && (
+          <div>
+            <div style={styles.sectionHeader}>
+              <div>
+                <h3 style={styles.sectionTitle}>Nómina de Estudiantes de Primer Año</h3>
+                <p style={styles.sectionSubtitle}>
+                  Revisa el porcentaje de avance en los módulos "Presentemos la UBB" y "Caja de herramientas".
+                </p>
+              </div>
+            </div>
+            <TablaEstudiantes
+              estudiantes={estudiantes}
+              onSelectEstudiante={(id: number) => setEstudianteModalId(id)}
+            />
+          </div>
+        )}
+
+        {pestanaActiva === 'actividades' && (
+          <VistaActividades
+            actividades={actividades}
+            cargando={cargando}
+            onSelectEstudiante={(id: number) => setEstudianteModalId(id)}
+          />
+        )}
       </main>
-      {estudianteModalId ? (
+
+      {estudianteModalId && (
         <ModalEstudiante
           estudianteId={estudianteModalId}
           onClose={() => setEstudianteModalId(null)}
         />
-      ) : null}
-      {cargando ? (
+      )}
+
+      {cargando && (
         <div style={styles.loadingOverlay}>
           <div style={styles.loadingBox}>
             <div style={styles.loadingSpinnerWrapper}>
@@ -114,7 +167,7 @@ export const DashboardPage: React.FC = () => {
             <span style={styles.loadingSubtitle}>Actualizando información del sistema</span>
           </div>
         </div>
-      ) : null}
+      )}
     </div>
   );
 };
@@ -135,7 +188,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'flex-start',
     flexWrap: 'wrap',
     gap: '1rem',
-    marginBottom: '2rem',
+    marginBottom: '1.5rem',
   },
   welcomeTag: {
     fontSize: '0.8rem',
@@ -172,6 +225,41 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: '1.5rem',
     display: 'flex',
     alignItems: 'center',
+  },
+  tabContainer: {
+    display: 'flex',
+    gap: '0.75rem',
+    marginBottom: '1.5rem',
+    borderBottom: '2px solid #e2e8f0',
+    paddingBottom: '0.5rem',
+  },
+  tabButton: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    padding: '0.65rem 1.25rem',
+    fontSize: '0.9rem',
+    fontWeight: '600',
+    color: '#64748b',
+    backgroundColor: 'transparent',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+  },
+  tabButtonActive: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    padding: '0.65rem 1.25rem',
+    fontSize: '0.9rem',
+    fontWeight: '700',
+    color: '#ffffff',
+    backgroundColor: '#002b49',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    boxShadow: '0 2px 4px rgba(0, 43, 73, 0.2)',
   },
   sectionHeader: {
     marginBottom: '1rem',

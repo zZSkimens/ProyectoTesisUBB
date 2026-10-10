@@ -19,7 +19,7 @@ export default function App(): React.JSX.Element {
     return <LoginPage />;
   }
 
-  if (usuario && usuario.rol === 'estudiante') {
+  if (usuario && usuario.rol !== 'tutor' && usuario.rol !== 'admin') {
     return (
       <div style={styles.restrictedScreen}>
         <div style={styles.restrictedCard}>
