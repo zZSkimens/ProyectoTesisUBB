@@ -1,13 +1,15 @@
 import type React from 'react';
 import { useEffect, useState } from 'react';
-import { RefreshCw, Users, Target } from 'lucide-react';
+import { Menu, RefreshCw } from 'lucide-react';
 import { tutoresApi } from '../api/tutores.api';
 import { BannerAlertas } from '../components/BannerAlertas';
 import { ModalEstudiante } from '../components/ModalEstudiante';
-import { Navbar } from '../components/Navbar';
+import { ModalNuevoEstudiante } from '../components/ModalNuevoEstudiante';
+import { Sidebar, type SeccionPanel } from '../components/Sidebar';
 import { TablaEstudiantes } from '../components/TablaEstudiantes';
 import { TarjetasMetricas } from '../components/TarjetasMetricas';
 import { VistaActividades } from '../components/VistaActividades';
+import { VistaHorarioConsultas } from '../components/VistaHorarioConsultas';
 import { useAuth } from '../context/AuthContext';
 import type { Estudiante, MetricasDashboard, ActividadResumen } from '../types/index';
 
@@ -17,10 +19,12 @@ export const DashboardPage: React.FC = () => {
   const [metricas, setMetricas] = useState<MetricasDashboard | null>(null);
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [actividades, setActividades] = useState<ActividadResumen[]>([]);
-  const [pestanaActiva, setPestanaActiva] = useState<'estudiantes' | 'actividades'>('estudiantes');
+  const [seccionActiva, setSeccionActiva] = useState<SeccionPanel>('dashboard');
   const [cargando, setCargando] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [estudianteModalId, setEstudianteModalId] = useState<number | null>(null);
+  const [mostrarModalNuevo, setMostrarModalNuevo] = useState<boolean>(false);
+  const [sidebarAbierto, setSidebarAbierto] = useState<boolean>(false);
 
   const cargarDatos = async () => {
     setCargando(true);
@@ -31,14 +35,14 @@ export const DashboardPage: React.FC = () => {
         tutoresApi.obtenerDashboard(),
         tutoresApi.obtenerEstudiantes(),
         tutoresApi.obtenerActividades(),
-        new Promise((resolve) => setTimeout(resolve, 500)),
+        new Promise((resolve) => setTimeout(resolve, 400)),
       ]);
 
       setMetricas(resDashboard.metricas);
       setEstudiantes(resEstudiantes.estudiantes);
       setActividades(resActividades.actividades);
     } catch (err: any) {
-      setError(err.message || 'Error al cargar la informacion del panel');
+      setError(err.message || 'Error al cargar la información del panel');
     } finally {
       setCargando(false);
     }
@@ -58,32 +62,68 @@ export const DashboardPage: React.FC = () => {
     iconoRefrescarClase = 'spin-icon';
   }
 
-  let alertasGrupo = metricas && metricas.alertas ? metricas.alertas : [];
+  let alertasGrupo: any[] = [];
+  if (metricas && metricas.alertas) {
+    alertasGrupo = metricas.alertas;
+  }
 
   return (
-    <div style={styles.page}>
-      <Navbar />
-      <main style={styles.main}>
-        <div style={styles.welcomeBanner}>
-          <div>
-            <span style={styles.welcomeTag}>Campus Concepción • Segundo Semestre 2026</span>
-            <h2 style={styles.welcomeTitle}>Bienvenido(a), {nombreTutor}</h2>
-            <p style={styles.welcomeDesc}>
-              Monitorea en tiempo real la participación, avance de misiones y necesidades de apoyo de tus estudiantes novatos.
-            </p>
+    <div className="layout-container">
+      {sidebarAbierto && (
+        <div
+          className="sidebar-backdrop"
+          onClick={() => setSidebarAbierto(false)}
+        />
+      )}
+
+      <Sidebar
+        seccionActiva={seccionActiva}
+        onCambiarSeccion={(s) => {
+          setSeccionActiva(s);
+          setSidebarAbierto(false);
+        }}
+        conteoAlertas={alertasGrupo.length}
+        abierto={sidebarAbierto}
+        onCerrar={() => setSidebarAbierto(false)}
+      />
+
+      <div className="main-content">
+        <header className="top-bar">
+          <div className="header-brand-greeting" style={styles.brandGreetingWrapper}>
+            <button
+              type="button"
+              onClick={() => setSidebarAbierto(true)}
+              className="menu-toggle-btn"
+              title="Abrir menú"
+            >
+              <Menu size={20} />
+            </button>
+
+            <img
+              src="/logo-ubb-navbar.png"
+              alt="Universidad del Bío-Bío"
+              className="header-logo-mobile"
+              style={styles.headerLogo}
+            />
+            <div className="header-separator-mobile" style={styles.headerSeparator}></div>
+            <div className="header-greeting-mobile">
+              <span className="top-tag-mobile" style={styles.topTag}>Campus Concepción • Segundo Semestre 2026</span>
+              <h2 className="top-greeting-mobile" style={styles.topGreeting}>Bienvenido(a), {nombreTutor}</h2>
+            </div>
           </div>
 
           <button
             onClick={cargarDatos}
             disabled={cargando}
-            className="btn-secondary"
+            className="btn-secondary sync-btn-mobile"
             style={styles.refreshBtn}
-            title="Actualizar datos"
+            title="Sincronizar información del sistema"
+            type="button"
           >
-            <RefreshCw size={16} className={iconoRefrescarClase} />
-            <span>Actualizar</span>
+            <RefreshCw size={15} className={iconoRefrescarClase} />
+            <span>Sincronizar</span>
           </button>
-        </div>
+        </header>
 
         {error && (
           <div style={styles.errorAlert}>
@@ -92,68 +132,74 @@ export const DashboardPage: React.FC = () => {
               onClick={cargarDatos}
               className="btn-secondary"
               style={{ marginLeft: '1rem', padding: '0.3rem 0.6rem' }}
+              type="button"
             >
               Reintentar
             </button>
           </div>
         )}
 
-        <BannerAlertas
-          alertas={alertasGrupo}
-          onSelectEstudiante={(id: number) => setEstudianteModalId(id)}
-          onIrActividades={() => setPestanaActiva('actividades')}
-        />
+        <main className="content-body">
+          {seccionActiva === 'dashboard' && (
+            <div>
+              <TarjetasMetricas metricas={metricas} />
 
-        <TarjetasMetricas metricas={metricas} />
-
-        <div style={styles.tabContainer}>
-          <button
-            onClick={() => setPestanaActiva('estudiantes')}
-            style={pestanaActiva === 'estudiantes' ? styles.tabButtonActive : styles.tabButton}
-          >
-            <Users size={18} />
-            <span>Nómina de Estudiantes ({estudiantes.length})</span>
-          </button>
-
-          <button
-            onClick={() => setPestanaActiva('actividades')}
-            style={pestanaActiva === 'actividades' ? styles.tabButtonActive : styles.tabButton}
-          >
-            <Target size={18} />
-            <span>Actividades de Inducción ({actividades.length})</span>
-          </button>
-        </div>
-
-        {pestanaActiva === 'estudiantes' && (
-          <div>
-            <div style={styles.sectionHeader}>
-              <div>
-                <h3 style={styles.sectionTitle}>Nómina de Estudiantes de Primer Año</h3>
-                <p style={styles.sectionSubtitle}>
-                  Revisa el porcentaje de avance en los módulos "Presentemos la UBB" y "Caja de herramientas".
-                </p>
-              </div>
+              <BannerAlertas
+                alertas={alertasGrupo}
+                onSelectEstudiante={(id: number) => setEstudianteModalId(id)}
+                onIrActividades={() => setSeccionActiva('actividades')}
+              />
             </div>
-            <TablaEstudiantes
-              estudiantes={estudiantes}
+          )}
+
+          {seccionActiva === 'estudiantes' && (
+            <div>
+              <div style={styles.sectionHeader}>
+                <div>
+                  <h3 style={styles.sectionTitle}>Gestión y Nómina de Estudiantes Novatos</h3>
+                  <p style={styles.sectionSubtitle}>
+                    Búsqueda en tiempo real por nombre o RUT institucional, filtrado por estado de atención y registro de estudiantes.
+                  </p>
+                </div>
+              </div>
+
+              <TablaEstudiantes
+                estudiantes={estudiantes}
+                onSelectEstudiante={(id: number) => setEstudianteModalId(id)}
+                onNuevoEstudiante={() => setMostrarModalNuevo(true)}
+              />
+            </div>
+          )}
+
+          {seccionActiva === 'actividades' && (
+            <VistaActividades
+              actividades={actividades}
+              cargando={cargando}
               onSelectEstudiante={(id: number) => setEstudianteModalId(id)}
             />
-          </div>
-        )}
+          )}
 
-        {pestanaActiva === 'actividades' && (
-          <VistaActividades
-            actividades={actividades}
-            cargando={cargando}
-            onSelectEstudiante={(id: number) => setEstudianteModalId(id)}
-          />
-        )}
-      </main>
+          {seccionActiva === 'consultas' && <VistaHorarioConsultas />}
+        </main>
+      </div>
 
       {estudianteModalId && (
         <ModalEstudiante
           estudianteId={estudianteModalId}
           onClose={() => setEstudianteModalId(null)}
+          onEstudianteEliminado={() => {
+            setEstudianteModalId(null);
+            cargarDatos();
+          }}
+        />
+      )}
+
+      {mostrarModalNuevo && (
+        <ModalNuevoEstudiante
+          onClose={() => setMostrarModalNuevo(false)}
+          onEstudianteCreado={() => {
+            cargarDatos();
+          }}
         />
       )}
 
@@ -161,10 +207,10 @@ export const DashboardPage: React.FC = () => {
         <div style={styles.loadingOverlay}>
           <div style={styles.loadingBox}>
             <div style={styles.loadingSpinnerWrapper}>
-              <RefreshCw size={36} color="#1d70b8" className="spin-icon" />
+              <RefreshCw size={36} color="#0284c7" className="spin-icon" />
             </div>
-            <p style={styles.loadingTitle}>Espere un momento por favor...</p>
-            <span style={styles.loadingSubtitle}>Actualizando información del sistema</span>
+            <p style={styles.loadingTitle}>Cargando información institucional...</p>
+            <span style={styles.loadingSubtitle}>Conectando con el servidor UBB</span>
           </div>
         </div>
       )}
@@ -173,96 +219,92 @@ export const DashboardPage: React.FC = () => {
 };
 
 const styles: Record<string, React.CSSProperties> = {
-  page: {
+  layout: {
     minHeight: '100vh',
     backgroundColor: '#f8fafc',
+    display: 'flex',
   },
-  main: {
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: '2rem 1.5rem 4rem 1.5rem',
+  mainContent: {
+    marginLeft: '270px',
+    flex: 1,
+    minHeight: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
   },
-  welcomeBanner: {
+  topBar: {
+    backgroundColor: '#002b49',
+    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+    padding: '1.25rem 2.5rem',
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    flexWrap: 'wrap',
-    gap: '1rem',
-    marginBottom: '1.5rem',
+    alignItems: 'center',
+    position: 'sticky',
+    top: 0,
+    zIndex: 50,
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
   },
-  welcomeTag: {
-    fontSize: '0.8rem',
-    fontWeight: '600',
-    color: '#1d70b8',
+  brandGreetingWrapper: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1.25rem',
+  },
+  headerLogo: {
+    height: '42px',
+    width: 'auto',
+    objectFit: 'contain',
+    display: 'block',
+  },
+  headerSeparator: {
+    width: '1px',
+    height: '36px',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+  },
+  topTag: {
+    fontSize: '0.75rem',
+    fontWeight: '700',
+    color: '#93c5fd',
     textTransform: 'uppercase',
     letterSpacing: '0.5px',
     display: 'block',
-    marginBottom: '0.25rem',
+    marginBottom: '0.2rem',
   },
-  welcomeTitle: {
-    fontSize: '1.75rem',
+  topGreeting: {
+    fontSize: '1.45rem',
     fontWeight: '800',
-    color: '#002b49',
+    color: '#ffffff',
     margin: 0,
     lineHeight: 1.2,
   },
-  welcomeDesc: {
-    fontSize: '0.95rem',
-    color: '#64748b',
-    marginTop: '0.35rem',
-    maxWidth: '650px',
-  },
   refreshBtn: {
-    padding: '0.55rem 1rem',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.45rem',
+    padding: '0.5rem 0.95rem',
     fontSize: '0.85rem',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    color: '#ffffff',
+    border: '1px solid rgba(255, 255, 255, 0.25)',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontWeight: '600',
+    transition: 'all 0.15s ease',
+  },
+  contentBody: {
+    padding: '2rem 2.5rem 4rem 2.5rem',
+    flex: 1,
   },
   errorAlert: {
+    margin: '1.5rem 2.5rem 0 2.5rem',
     backgroundColor: '#fef2f2',
     border: '1px solid #fee2e2',
     color: '#b91c1c',
     padding: '1rem',
-    borderRadius: '8px',
-    marginBottom: '1.5rem',
+    borderRadius: '10px',
     display: 'flex',
     alignItems: 'center',
-  },
-  tabContainer: {
-    display: 'flex',
-    gap: '0.75rem',
-    marginBottom: '1.5rem',
-    borderBottom: '2px solid #e2e8f0',
-    paddingBottom: '0.5rem',
-  },
-  tabButton: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    padding: '0.65rem 1.25rem',
-    fontSize: '0.9rem',
-    fontWeight: '600',
-    color: '#64748b',
-    backgroundColor: 'transparent',
-    border: 'none',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    transition: 'all 0.15s ease',
-  },
-  tabButtonActive: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    padding: '0.65rem 1.25rem',
-    fontSize: '0.9rem',
-    fontWeight: '700',
-    color: '#ffffff',
-    backgroundColor: '#002b49',
-    border: 'none',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    boxShadow: '0 2px 4px rgba(0, 43, 73, 0.2)',
   },
   sectionHeader: {
-    marginBottom: '1rem',
+    marginBottom: '1.25rem',
   },
   sectionTitle: {
     fontSize: '1.25rem',

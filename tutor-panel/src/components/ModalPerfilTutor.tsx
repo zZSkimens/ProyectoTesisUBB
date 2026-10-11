@@ -1,5 +1,6 @@
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Camera, Trash2, User, X } from 'lucide-react';
 import type { Usuario } from '../types/index.js';
 
@@ -108,7 +109,7 @@ export const ModalPerfilTutor: React.FC<ModalPerfilTutorProps> = ({
     emailTutor = usuario.email;
   }
 
-  return (
+  return createPortal((
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div style={styles.header}>
@@ -217,7 +218,7 @@ export const ModalPerfilTutor: React.FC<ModalPerfilTutorProps> = ({
         </div>
       </div>
     </div>
-  );
+  ), document.body);
 };
 
 const styles: Record<string, React.CSSProperties> = {
@@ -408,11 +409,13 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '0.15rem',
     paddingBottom: '0.65rem',
     borderBottom: '1px solid #e2e8f0',
+    minWidth: 0,
   },
   infoItemLast: {
     display: 'flex',
     flexDirection: 'column',
     gap: '0.15rem',
+    minWidth: 0,
   },
   infoLabel: {
     fontSize: '0.75rem',
@@ -422,6 +425,8 @@ const styles: Record<string, React.CSSProperties> = {
   infoValue: {
     fontSize: '0.9rem',
     color: '#0f172a',
+    overflowWrap: 'anywhere',
+    minWidth: 0,
   },
   footer: {
     padding: '1rem 1.5rem',

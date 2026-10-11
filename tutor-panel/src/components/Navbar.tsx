@@ -54,7 +54,7 @@ export const Navbar: React.FC = () => {
         <div style={styles.container}>
           <div style={styles.brandContainer}>
             <img
-              src="/logo-ubb-dashboard.png"
+              src="/logo-ubb-navbar.png"
               alt="Universidad del Bío-Bío"
               style={styles.logoImg}
             />
