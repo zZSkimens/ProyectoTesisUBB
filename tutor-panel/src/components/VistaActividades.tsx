@@ -129,7 +129,6 @@ export const VistaActividades: React.FC<VistaActividadesProps> = ({
                     {getTipoIcon(act.tipo)}
                     <span>{getTipoLabel(act.tipo)}</span>
                   </div>
-                  <span style={styles.codeBadge}>{act.codigo}</span>
                 </div>
 
                 <div style={styles.pointsBadge}>
@@ -174,6 +173,7 @@ export const VistaActividades: React.FC<VistaActividadesProps> = ({
                   onClick={() => toggleExpandir(act.id)}
                   className="btn-secondary"
                   style={styles.expandBtn}
+                  aria-expanded={expandido}
                 >
                   <span>
                     {expandido
@@ -298,8 +298,9 @@ const styles: Record<string, React.CSSProperties> = {
   },
   grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))',
     gap: '1.25rem',
+    alignItems: 'start',
   },
   card: {
     backgroundColor: '#ffffff',
