@@ -205,7 +205,7 @@ npm run db:migrate
 npm run db:seed
 ```
 
-El seed crea un tutor, estudiantes, misiones y algunos registros de progreso de ejemplo. **No lo ejecutes en una base de datos de producción**.
+El seed crea un tutor, estudiantes, misiones y algunos registros de progreso de ejemplo.
 
 5. Inicia el backend en modo desarrollo:
 
