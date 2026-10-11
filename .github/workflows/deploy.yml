@@ -25,5 +25,9 @@ jobs:
           source ~/.bashrc 2>/dev/null || true
           cd backend
           npm install
+          npm run build
           cp ~/backend.env ./.env
-          pm2 restart backend-tesis || pm2 start src/index.js --name "backend-tesis"
+          npm run db:migrate
+          pm2 delete backend-tesis 2>/dev/null || true
+          pm2 start dist/src/index.js --name "backend-tesis"
+          pm2 save

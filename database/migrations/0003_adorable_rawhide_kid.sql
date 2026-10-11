@@ -1,0 +1,1 @@
+ALTER TABLE "estudiantes" ALTER COLUMN "anio_ingreso" SET DEFAULT EXTRACT(YEAR FROM CURRENT_DATE)::integer;

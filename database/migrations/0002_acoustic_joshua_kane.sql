@@ -1,0 +1,2 @@
+CREATE UNIQUE INDEX "estudiantes_rut_canonico_unique" ON "estudiantes" USING btree (regexp_replace(upper("rut"), '[^0-9K]', '', 'g'));--> statement-breakpoint
+CREATE UNIQUE INDEX "estudiantes_email_normalizado_unique" ON "estudiantes" USING btree (lower(btrim("email")));

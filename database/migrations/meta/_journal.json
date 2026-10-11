@@ -8,6 +8,41 @@
       "when": 1789152077239,
       "tag": "0000_tablas_iniciales",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791665812393,
+      "tag": "0001_observaciones_y_horarios",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791668544132,
+      "tag": "0002_acoustic_joshua_kane",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791668569328,
+      "tag": "0003_adorable_rawhide_kid",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791674941286,
+      "tag": "0004_special_expediter",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791676602252,
+      "tag": "0005_fast_jocasta",
+      "breakpoints": true
     }
   ]
 }
