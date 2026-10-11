@@ -1,19 +1,22 @@
 import type React from 'react';
 import { useState } from 'react';
-import { ChevronRight, Filter, Search, User } from 'lucide-react';
+import { ChevronDown, ChevronRight, Filter, Search, User, UserPlus } from 'lucide-react';
 import type { Estudiante } from '../types/index.js';
 
 export interface TablaEstudiantesProps {
   estudiantes: Estudiante[];
   onSelectEstudiante: (id: number) => void;
+  onNuevoEstudiante?: () => void;
 }
 
 export const TablaEstudiantes: React.FC<TablaEstudiantesProps> = ({
   estudiantes,
   onSelectEstudiante,
+  onNuevoEstudiante,
 }) => {
   const [busqueda, setBusqueda] = useState<string>('');
   const [filtroEstado, setFiltroEstado] = useState<string>('todos');
+  const [filtrosAbiertos, setFiltrosAbiertos] = useState<boolean>(false);
 
   const estudiantesFiltrados = estudiantes.filter((estudiante) => {
     const termino = busqueda.toLowerCase().trim();
@@ -39,72 +42,86 @@ export const TablaEstudiantes: React.FC<TablaEstudiantesProps> = ({
     return coincideTexto && coincideEstado;
   });
 
-  let estiloFiltroTodos = styles.filterBtn;
-  if (filtroEstado === 'todos') {
-    estiloFiltroTodos = styles.filterBtnActive;
-  }
-
-  let estiloFiltroAlDia = styles.filterBtn;
+  let textoFiltroSeleccionado = 'Todos';
   if (filtroEstado === 'Al dia') {
-    estiloFiltroAlDia = styles.filterBtnActive;
+    textoFiltroSeleccionado = 'Al día';
+  } else if (filtroEstado === 'En progreso') {
+    textoFiltroSeleccionado = 'En progreso';
+  } else if (filtroEstado === 'En riesgo') {
+    textoFiltroSeleccionado = 'En riesgo';
   }
 
-  let estiloFiltroEnProgreso = styles.filterBtn;
-  if (filtroEstado === 'En progreso') {
-    estiloFiltroEnProgreso = styles.filterBtnActive;
+  let estiloBotonFiltro = styles.filterToggle;
+  if (filtroEstado !== 'todos') {
+    estiloBotonFiltro = styles.filterToggleActive;
   }
 
-  let estiloFiltroEnRiesgo = styles.filterBtn;
-  if (filtroEstado === 'En riesgo') {
-    estiloFiltroEnRiesgo = styles.filterBtnActiveRisk;
-  }
+  const seleccionarFiltro = (estado: string) => {
+    setFiltroEstado(estado);
+    setFiltrosAbiertos(false);
+  };
 
   return (
     <div style={styles.container}>
-      <div style={styles.toolbar}>
-        <div style={styles.searchWrapper}>
+      {onNuevoEstudiante && (
+        <div className="students-actions-row" style={styles.actionsRow}>
+          <button
+            type="button"
+            onClick={onNuevoEstudiante}
+            className="btn-primary students-add-button"
+            style={styles.addStudentBtn}
+          >
+            <UserPlus size={16} />
+            <span>Inscribir Estudiante</span>
+          </button>
+        </div>
+      )}
+
+      <div style={styles.tableCard}>
+        <div className="students-toolbar" style={styles.toolbar}>
+        <div className="students-search-wrapper" style={styles.searchWrapper}>
           <Search size={18} color="#94a3b8" style={styles.searchIcon} />
           <input
             type="text"
-            placeholder="Buscar estudiante por nombre..."
+            placeholder="Buscar estudiante por nombre o RUT institucional..."
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             style={styles.searchInput}
           />
         </div>
 
-        <div style={styles.filterGroup}>
-          <span style={styles.filterLabel}>
-            <Filter size={15} /> Filtrar:
-          </span>
+        <div className="students-filter-wrapper" style={styles.filterMenuWrapper}>
           <button
-            onClick={() => setFiltroEstado('todos')}
-            style={estiloFiltroTodos}
+            type="button"
+            onClick={() => setFiltrosAbiertos(!filtrosAbiertos)}
+            className="students-filter-toggle"
+            style={estiloBotonFiltro}
+            aria-expanded={filtrosAbiertos}
           >
-            Todos ({estudiantes.length})
+            <Filter size={15} />
+            <span>Filtrar: {textoFiltroSeleccionado}</span>
+            <ChevronDown size={15} />
           </button>
-          <button
-            onClick={() => setFiltroEstado('Al dia')}
-            style={estiloFiltroAlDia}
-          >
-            Al día
-          </button>
-          <button
-            onClick={() => setFiltroEstado('En progreso')}
-            style={estiloFiltroEnProgreso}
-          >
-            En progreso
-          </button>
-          <button
-            onClick={() => setFiltroEstado('En riesgo')}
-            style={estiloFiltroEnRiesgo}
-          >
-            En riesgo
-          </button>
+          {filtrosAbiertos && (
+            <div className="students-filter-menu" style={styles.filterMenu}>
+              <button type="button" onClick={() => seleccionarFiltro('todos')} style={styles.filterMenuOption}>
+                Todos ({estudiantes.length})
+              </button>
+              <button type="button" onClick={() => seleccionarFiltro('Al dia')} style={styles.filterMenuOption}>
+                Al día
+              </button>
+              <button type="button" onClick={() => seleccionarFiltro('En progreso')} style={styles.filterMenuOption}>
+                En progreso
+              </button>
+              <button type="button" onClick={() => seleccionarFiltro('En riesgo')} style={styles.filterMenuOption}>
+                En riesgo
+              </button>
+            </div>
+          )}
         </div>
-      </div>
-      <div style={styles.tableWrapper}>
-        <table style={styles.table}>
+        </div>
+        <div style={styles.tableWrapper}>
+        <table className="students-responsive-table" style={styles.table}>
           <thead>
             <tr style={styles.tableHeaderRow}>
               <th style={styles.th}>Estudiante</th>
@@ -145,7 +162,7 @@ export const TablaEstudiantes: React.FC<TablaEstudiantesProps> = ({
 
                 return (
                   <tr key={estudiante.id} style={styles.tr}>
-                    <td style={styles.td}>
+                    <td data-label="Estudiante" style={styles.td}>
                       <div style={styles.studentInfo}>
                         <div style={styles.studentAvatar}>
                           <User size={16} color="#002b49" />
@@ -153,16 +170,16 @@ export const TablaEstudiantes: React.FC<TablaEstudiantesProps> = ({
                         <span style={styles.studentName}>{estudiante.nombre}</span>
                       </div>
                     </td>
-                    <td style={styles.td}>
+                    <td data-label="Carrera" style={styles.td}>
                       <span style={styles.careerText}>{estudiante.carrera}</span>
                     </td>
-                    <td style={styles.td}>
+                    <td data-label="Misiones" style={styles.td}>
                       <span style={styles.missionsCount}>
                         <strong>{completadas}</strong> de {total}
                       </span>
                     </td>
-                    <td style={styles.td}>
-                      <div style={styles.progressCell}>
+                    <td data-label="Avance global" style={styles.td}>
+                      <div className="students-progress-cell" style={styles.progressCell}>
                         <div className="progress-bar-container" style={{ width: '110px' }}>
                           <div
                             className={`progress-bar-fill ${progressClass}`}
@@ -172,13 +189,13 @@ export const TablaEstudiantes: React.FC<TablaEstudiantesProps> = ({
                         <span style={styles.progressPercent}>{avance}%</span>
                       </div>
                     </td>
-                    <td style={styles.td}>
+                    <td data-label="Estado" style={styles.td}>
                       <span className={`badge ${badgeClass}`}>{estado}</span>
                     </td>
-                    <td style={{ ...styles.td, textAlign: 'right' }}>
+                    <td data-label="Acción" style={{ ...styles.td, textAlign: 'right' }}>
                       <button
                         onClick={() => onSelectEstudiante(estudiante.id)}
-                        className="btn-secondary"
+                        className="btn-secondary students-action-button"
                         style={styles.actionBtn}
                       >
                         <span>Ver Ficha</span>
@@ -191,6 +208,7 @@ export const TablaEstudiantes: React.FC<TablaEstudiantesProps> = ({
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );
@@ -198,6 +216,23 @@ export const TablaEstudiantes: React.FC<TablaEstudiantesProps> = ({
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.75rem',
+  },
+  actionsRow: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+  },
+  addStudentBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.45rem',
+    padding: '0.65rem 1rem',
+    fontSize: '0.85rem',
+    whiteSpace: 'nowrap',
+  },
+  tableCard: {
     backgroundColor: '#ffffff',
     borderRadius: '12px',
     border: '1px solid #e2e8f0',
@@ -217,7 +252,7 @@ const styles: Record<string, React.CSSProperties> = {
   searchWrapper: {
     position: 'relative',
     flex: '1',
-    minWidth: '280px',
+    minWidth: 'min(100%, 260px)',
     maxWidth: '450px',
   },
   searchIcon: {
@@ -233,46 +268,60 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '8px',
     outline: 'none',
   },
-  filterGroup: {
+  filterMenuWrapper: {
+    position: 'relative',
     display: 'flex',
     alignItems: 'center',
-    gap: '0.5rem',
-    flexWrap: 'wrap',
   },
-  filterLabel: {
-    fontSize: '0.85rem',
-    color: '#64748b',
+  filterToggle: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.25rem',
-    marginRight: '0.25rem',
-  },
-  filterBtn: {
-    padding: '0.45rem 0.85rem',
-    fontSize: '0.8rem',
-    borderRadius: '6px',
+    gap: '0.45rem',
+    padding: '0.55rem 0.8rem',
+    borderRadius: '7px',
     border: '1px solid #e2e8f0',
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#ffffff',
     color: '#475569',
-    fontWeight: '500',
+    fontSize: '0.85rem',
+    fontWeight: '600',
+    whiteSpace: 'nowrap',
   },
-  filterBtnActive: {
-    padding: '0.45rem 0.85rem',
-    fontSize: '0.8rem',
-    borderRadius: '6px',
+  filterToggleActive: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.45rem',
+    padding: '0.55rem 0.8rem',
+    borderRadius: '7px',
     border: '1px solid #002b49',
     backgroundColor: '#002b49',
     color: '#ffffff',
+    fontSize: '0.85rem',
     fontWeight: '600',
+    whiteSpace: 'nowrap',
   },
-  filterBtnActiveRisk: {
-    padding: '0.45rem 0.85rem',
-    fontSize: '0.8rem',
+  filterMenu: {
+    position: 'absolute',
+    top: 'calc(100% + 0.4rem)',
+    right: 0,
+    zIndex: 10,
+    minWidth: '160px',
+    padding: '0.35rem',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.2rem',
+    backgroundColor: '#ffffff',
+    border: '1px solid #e2e8f0',
+    borderRadius: '9px',
+    boxShadow: '0 8px 20px rgba(15, 23, 42, 0.12)',
+  },
+  filterMenuOption: {
+    padding: '0.6rem 0.75rem',
+    border: 'none',
     borderRadius: '6px',
-    border: '1px solid #ef4444',
-    backgroundColor: '#ef4444',
-    color: '#ffffff',
-    fontWeight: '600',
+    backgroundColor: '#ffffff',
+    color: '#334155',
+    textAlign: 'left',
+    fontSize: '0.85rem',
   },
   tableWrapper: {
     overflowX: 'auto',
