@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { formatearRut, rutChilenoValido } from '../utils/rut.js';
+import { formatearRut, rutValido } from '../utils/rut.js';
 
 export const validarIdEstudiante = (req: Request, res: Response, next: NextFunction): void | Response => {
   const { id } = req.params;
@@ -52,7 +52,7 @@ export const validarNuevoEstudiante = (req: Request, res: Response, next: NextFu
 
   const { rut, nombre, email, carrera } = req.body;
 
-  if (!rut || typeof rut !== 'string' || !rutChilenoValido(rut)) {
+  if (!rut || typeof rut !== 'string' || !rutValido(rut)) {
     return res.status(400).json({ error: 'El RUT del estudiante no es valido' });
   }
 

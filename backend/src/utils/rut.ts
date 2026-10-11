@@ -11,7 +11,7 @@ export function formatearRut(rut: string): string {
   return `${cuerpoFormateado}-${digitoVerificador}`;
 }
 
-export function rutChilenoValido(rut: string): boolean {
+export function rutValido(rut: string): boolean {
   const rutNormalizado = normalizarRut(rut);
 
   if (!/^\d{7,8}[0-9K]$/.test(rutNormalizado)) {
