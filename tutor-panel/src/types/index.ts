@@ -124,3 +124,29 @@ export interface AuthContextType {
   iniciarSesion: (email: string, password: string) => Promise<Usuario>;
   cerrarSesion: () => void;
 }
+
+export interface ObservacionEstudiante {
+  id: number;
+  estudianteId: number;
+  estudianteNombre?: string;
+  tutorId: number;
+  tipo: string;
+  titulo: string;
+  contenido: string;
+  compromiso?: string | null;
+  creadoEn: string;
+}
+
+export interface CentroAtencionData {
+  tutorId: number;
+  numeroCentro: number;
+  modalidad: 'presencial' | 'online';
+  oficina: string;
+  horarioConsultas: string;
+  canalContacto: string;
+  urlContacto: string;
+  actualizadoEn?: string;
+  guardado?: boolean;
+}
+
+export type CentroAtencionInput = Omit<CentroAtencionData, 'tutorId' | 'actualizadoEn'>;
