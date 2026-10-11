@@ -15,7 +15,7 @@ const rutaFrontend = path.resolve(__dirname, '../../tutor-panel/dist');
 
 const app = express();
 
-app.use(cors());
+app.use(cors({ origin: config.corsOrigins }));
 app.use(express.json());
 app.use(morgan('dev'));
 
@@ -28,11 +28,10 @@ app.get('/api/status', async (req: Request, res: Response) => {
       horaServidor: dbCheck.rows[0].current_time,
       entorno: config.nodeEnv,
     });
-  } catch (error: any) {
+  } catch {
     res.status(500).json({
       status: 'error',
       mensaje: 'Error de conexion con la base de datos',
-      detalle: error.message,
     });
   }
 });

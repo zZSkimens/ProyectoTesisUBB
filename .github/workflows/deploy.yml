@@ -27,6 +27,7 @@ jobs:
           npm install
           npm run build
           cp ~/backend.env ./.env
+          npm run db:migrate
           pm2 delete backend-tesis 2>/dev/null || true
           pm2 start dist/src/index.js --name "backend-tesis"
           pm2 save

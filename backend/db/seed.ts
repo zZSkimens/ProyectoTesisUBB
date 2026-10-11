@@ -31,7 +31,7 @@ async function seed() {
         nombre: 'Constanza Morales Valenzuela',
         email: 'constanza.morales2601@alumnos.ubiobio.cl',
         carrera: 'Ingeniería de Ejecución en Computación e Informática',
-        anioIngreso: 2026,
+        anioIngreso: new Date().getFullYear(),
         tutorId,
       },
       {
@@ -39,7 +39,7 @@ async function seed() {
         nombre: 'Matías Ignacio San Martín',
         email: 'matias.sanmartin2601@alumnos.ubiobio.cl',
         carrera: 'Ingeniería de Ejecución en Computación e Informática',
-        anioIngreso: 2026,
+        anioIngreso: new Date().getFullYear(),
         tutorId,
       },
       {
@@ -47,7 +47,7 @@ async function seed() {
         nombre: 'Valentina Paz Riquelme',
         email: 'valentina.riquelme2601@alumnos.ubiobio.cl',
         carrera: 'Ingeniería Civil Informática',
-        anioIngreso: 2026,
+        anioIngreso: new Date().getFullYear(),
         tutorId,
       },
       {
@@ -55,7 +55,7 @@ async function seed() {
         nombre: 'Diego Alejandro Araya',
         email: 'diego.araya2601@alumnos.ubiobio.cl',
         carrera: 'Ingeniería de Ejecución en Computación e Informática',
-        anioIngreso: 2026,
+        anioIngreso: new Date().getFullYear(),
         tutorId,
       },
     ];
