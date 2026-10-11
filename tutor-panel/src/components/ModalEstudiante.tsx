@@ -286,8 +286,8 @@ export const ModalEstudiante: React.FC<ModalEstudianteProps> = ({ estudianteId, 
                     )}
 
                     <form onSubmit={handleCrearObservacion} style={styles.obsForm}>
-                      <div style={styles.obsRow}>
-                        <div style={{ flex: 2, minWidth: 0 }}>
+                      <div className="observation-form-row">
+                        <div className="observation-form-field">
                           <label style={styles.obsLabel}>Título / Motivo</label>
                           <select
                             value={tituloObs}
@@ -301,7 +301,7 @@ export const ModalEstudiante: React.FC<ModalEstudianteProps> = ({ estudianteId, 
                             ))}
                           </select>
                         </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
+                        <div className="observation-form-field">
                           <label style={styles.obsLabel}>Tipo</label>
                           <select
                             value={tipoObs}

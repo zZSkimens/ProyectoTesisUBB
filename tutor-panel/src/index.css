@@ -303,8 +303,32 @@ input, select, textarea {
   display: none;
 }
 
+.observation-form-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+.observation-form-field {
+  min-width: 0;
+}
+
+.observation-form-row select {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
 /* Adaptacion Responsive para Celulares y Tablets */
 @media (max-width: 768px) {
+  .observation-form-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.85rem;
+  }
+
+  .observation-form-row select {
+    min-height: 44px;
+  }
+
   .sidebar-desktop {
     width: 280px;
     max-width: 84vw;
