@@ -3,15 +3,12 @@ import express, { type Request, type Response, type NextFunction } from 'express
 import morgan from 'morgan';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { config } from './config/env.js';
 import { pool } from '../db/connection.js';
 import apiRouter from './routes/index.js';
 import { manejadorErrores } from './middlewares/error.middleware.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const rutaFrontend = path.resolve(__dirname, '../../tutor-panel/dist');
+const rutaFrontend = path.resolve(process.cwd(), '../tutor-panel/dist');
 
 const app = express();
 
