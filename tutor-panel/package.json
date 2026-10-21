@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "build": "tsc --noEmit && tsc --noEmit -p tsconfig.cypress.json && vite build",
     "lint": "oxlint",
     "preview": "vite preview"
   },
@@ -15,9 +17,11 @@
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
+    "@types/node": "^26.6.5",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "cypress": "^16.2.0",
     "oxlint": "^1.81.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.0"
