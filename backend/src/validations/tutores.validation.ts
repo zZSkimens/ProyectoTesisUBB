@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { formatearRut, rutValido } from '../utils/rut.js';
+import { correoEstudiantilValido, validarCentroAtencion } from '../utils/validacionesTutor.js';
 
 export const validarIdEstudiante = (req: Request, res: Response, next: NextFunction): void | Response => {
   const { id } = req.params;
@@ -60,7 +61,7 @@ export const validarNuevoEstudiante = (req: Request, res: Response, next: NextFu
     return res.status(400).json({ error: 'Debe ingresar el nombre y apellido del estudiante' });
   }
 
-  if (!email || typeof email !== 'string' || !/^[^\s@]+@alumnos\.ubiobio\.cl$/i.test(email.trim())) {
+  if (!correoEstudiantilValido(email)) {
     return res.status(400).json({ error: 'El correo debe pertenecer al dominio @alumnos.ubiobio.cl' });
   }
 
@@ -86,13 +87,6 @@ export const validarHorarioConsultas = (req: Request, res: Response, next: NextF
     return res.status(400).json({ error: 'Debe proporcionar uno o dos centros de atencion' });
   }
 
-  const configuracionSalas: Record<string, { pisos: number[]; salasPorPiso: number }> = {
-    AA: { pisos: [1], salasPorPiso: 8 },
-    AB: { pisos: [1, 2, 3], salasPorPiso: 2 },
-    AC: { pisos: [1, 2, 3], salasPorPiso: 8 },
-    AD: { pisos: [2, 3], salasPorPiso: 2 },
-  };
-
   for (let indice = 0; indice < centros.length; indice++) {
     const centro = centros[indice];
     if (!centro || typeof centro !== 'object' || Array.isArray(centro)) {
@@ -106,65 +100,13 @@ export const validarHorarioConsultas = (req: Request, res: Response, next: NextF
       return res.status(400).json({ error: 'No se puede enviar el mismo centro mas de una vez' });
     }
 
-    if (centro.modalidad !== 'presencial' && centro.modalidad !== 'online') {
-      return res.status(400).json({ error: `La modalidad del centro ${indice + 1} no es valida` });
-    }
+    const errorCentro = validarCentroAtencion(centro, indice + 1);
+    if (errorCentro) return res.status(400).json({ error: errorCentro });
 
-    const camposTexto = ['oficina', 'horarioConsultas', 'canalContacto', 'urlContacto'];
-    for (const campo of camposTexto) {
-      if (typeof centro[campo] !== 'string') {
-        return res.status(400).json({ error: `El campo ${campo} del centro ${indice + 1} debe ser texto` });
-      }
-      centro[campo] = centro[campo].trim();
-    }
-
-    if (centro.horarioConsultas.length < 3) {
-      return res.status(400).json({ error: `Debe indicar un horario para el centro ${indice + 1}` });
-    }
-
-    const diasSemana = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
-    const diasIncluidos = diasSemana.filter((dia) => centro.horarioConsultas.toLowerCase().includes(dia));
-    if (diasIncluidos.length < 1 || diasIncluidos.length > 2) {
-      return res.status(400).json({ error: 'Cada centro debe tener disponibilidad entre 1 y 2 días por semana' });
-    }
-
-    if (centro.modalidad === 'presencial') {
-      const codigoSala = /^A([1-3])(\d{2})(AA|AB|AC|AD)$/.exec(centro.oficina);
-      if (!codigoSala) {
-        return res.status(400).json({ error: `La sala del centro ${indice + 1} no es valida` });
-      }
-
-      const piso = Number(codigoSala[1]);
-      const numeroSala = Number(codigoSala[2]);
-      const edificio = codigoSala[3];
-      const configuracion = configuracionSalas[edificio];
-      if (!configuracion.pisos.includes(piso) || numeroSala < 1 || numeroSala > configuracion.salasPorPiso) {
-        return res.status(400).json({ error: `La sala del centro ${indice + 1} no esta disponible` });
-      }
-
-      if (centro.canalContacto.length > 0 || centro.urlContacto.length > 0) {
-        return res.status(400).json({ error: 'Un centro presencial no puede tener canal ni URL online' });
-      }
-    }
-
-    if (centro.modalidad === 'online') {
-      if (centro.oficina.length > 0) {
-        return res.status(400).json({ error: 'Un centro online no puede tener una sala presencial' });
-      }
-      if (centro.canalContacto !== 'Discord' && centro.canalContacto !== 'Meet') {
-        return res.status(400).json({ error: `La plataforma online del centro ${indice + 1} no es valida` });
-      }
-      if (centro.urlContacto.length > 0) {
-        try {
-          const url = new URL(centro.urlContacto);
-          if (url.protocol !== 'https:' && url.protocol !== 'http:') {
-            return res.status(400).json({ error: 'La URL de contacto debe comenzar con http o https' });
-          }
-        } catch {
-          return res.status(400).json({ error: `La URL del centro ${indice + 1} no es valida` });
-        }
-      }
-    }
+    centro.oficina = centro.oficina.trim();
+    centro.horarioConsultas = centro.horarioConsultas.trim();
+    centro.canalContacto = centro.canalContacto.trim();
+    centro.urlContacto = centro.urlContacto.trim();
   }
 
   next();
