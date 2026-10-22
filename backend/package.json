@@ -7,7 +7,6 @@
     "start": "node dist/src/index.js",
     "dev": "tsx watch src/index.ts",
     "test": "vitest",
-    "test:integration": "vitest run src/tests/integration",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
