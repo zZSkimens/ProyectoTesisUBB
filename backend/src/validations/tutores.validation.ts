@@ -93,6 +93,7 @@ export const validarHorarioConsultas = (req: Request, res: Response, next: NextF
     AD: { pisos: [2, 3], salasPorPiso: 2 },
   };
 
+  const numerosCentros = new Set<number>();
   for (let indice = 0; indice < centros.length; indice++) {
     const centro = centros[indice];
     if (!centro || typeof centro !== 'object' || Array.isArray(centro)) {
@@ -102,9 +103,10 @@ export const validarHorarioConsultas = (req: Request, res: Response, next: NextF
     if (centro.numeroCentro !== 1 && centro.numeroCentro !== 2) {
       return res.status(400).json({ error: 'El numero de centro debe ser 1 o 2' });
     }
-    if (centros.some((otroCentro: any, otroIndice: number) => otroIndice !== indice && otroCentro.numeroCentro === centro.numeroCentro)) {
+    if (numerosCentros.has(centro.numeroCentro)) {
       return res.status(400).json({ error: 'No se puede enviar el mismo centro mas de una vez' });
     }
+    numerosCentros.add(centro.numeroCentro);
 
     if (centro.modalidad !== 'presencial' && centro.modalidad !== 'online') {
       return res.status(400).json({ error: `La modalidad del centro ${indice + 1} no es valida` });
