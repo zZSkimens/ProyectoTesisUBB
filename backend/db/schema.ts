@@ -22,6 +22,11 @@ export const usuarios = pgTable('usuarios', {
   actualizadoEn: timestamp('actualizado_en', { withTimezone: true }).defaultNow().notNull(),
 });
 
+export const tokensRevocados = pgTable('tokens_revocados', {
+  hash: varchar('hash', { length: 64 }).primaryKey(),
+  expiraEn: timestamp('expira_en', { withTimezone: true }).notNull(),
+});
+
 export const estudiantes = pgTable('estudiantes', {
   id: serial('id').primaryKey(),
   rut: varchar('rut', { length: 12 }).notNull().unique(),
@@ -45,12 +50,27 @@ export const misiones = pgTable('misiones', {
   codigo: varchar('codigo', { length: 50 }).notNull().unique(),
   titulo: text('titulo').notNull(),
   descripcion: text('descripcion').notNull(),
+  objetivo: text('objetivo').default('').notNull(),
+  lugar: varchar('lugar', { length: 30 }),
+  estadoPublicacion: varchar('estado_publicacion', { length: 20 }).default('publicada').notNull(),
+  condicionCumplimiento: text('condicion_cumplimiento'),
+  creadoPor: integer('creado_por').references(() => usuarios.id, { onDelete: 'set null' }),
+  creadoEn: timestamp('creado_en', { withTimezone: true }).defaultNow().notNull(),
+  actualizadoEn: timestamp('actualizado_en', { withTimezone: true }).defaultNow().notNull(),
   modulo: varchar('modulo', { length: 100 }).notNull(),
   tipo: varchar('tipo', { length: 50 }).default('exploracion').notNull(),
   puntosRecompensa: integer('puntos_recompensa').default(100).notNull(),
   orden: integer('orden').default(1).notNull(),
   activo: boolean('activo').default(true).notNull(),
 });
+
+export const misionesPorTutor = pgTable('misiones_por_tutor', {
+  tutorId: integer('tutor_id').notNull().references(() => usuarios.id, { onDelete: 'cascade' }),
+  misionId: integer('mision_id').notNull().references(() => misiones.id, { onDelete: 'cascade' }),
+  activa: boolean('activa').default(true).notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.tutorId, table.misionId] }),
+]);
 
 export const progresoEstudiantes = pgTable('progreso_estudiantes', {
   id: serial('id').primaryKey(),
