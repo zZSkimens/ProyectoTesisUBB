@@ -1,10 +1,8 @@
 import type { Estudiante } from '../types';
+import { calcularBarraPuntos } from '../utils/calcularBarraPuntos';
 
 export function BarraPuntos({ estudiante }: { estudiante: Estudiante }) {
-  const maximo = estudiante.maximoPuntos ?? 3000;
-  const umbral = estudiante.umbralMetaPuntos ?? 1700;
-  const puntos = Math.max(0, Math.min(estudiante.puntajeTotal ?? 0, maximo));
-  const alcanzada = puntos >= umbral;
+  const { maximo, umbral, puntos, alcanzada } = calcularBarraPuntos(estudiante);
   return <div className={`student-points${alcanzada ? ' student-points-complete' : ''}`}>
     <div className="student-points-label"><strong>{puntos} / {maximo} pts</strong></div>
     <div className="student-points-track" role="progressbar" aria-label={`Puntos de inducción de ${estudiante.nombre}`} aria-valuemin={0} aria-valuemax={maximo} aria-valuenow={puntos} aria-valuetext={`${puntos} de ${maximo} puntos. ${alcanzada ? 'Meta de inducción alcanzada' : `Meta desde ${umbral} puntos`}`}>
