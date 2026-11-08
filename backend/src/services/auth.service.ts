@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { eq } from 'drizzle-orm';
@@ -61,6 +62,7 @@ export const authService = {
 
     const token = jwt.sign(payload, config.jwtSecret, {
       expiresIn: '24h',
+      jwtid: randomUUID(),
     });
 
     return {
