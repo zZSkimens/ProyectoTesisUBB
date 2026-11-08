@@ -2,6 +2,7 @@ import type React from 'react';
 import { useState } from 'react';
 import { ChevronDown, ChevronRight, Filter, Search, User, UserPlus } from 'lucide-react';
 import type { Estudiante } from '../types/index.js';
+import { BarraPuntos } from './BarraPuntos';
 
 export interface TablaEstudiantesProps {
   estudiantes: Estudiante[];
@@ -49,6 +50,8 @@ export const TablaEstudiantes: React.FC<TablaEstudiantesProps> = ({
     textoFiltroSeleccionado = 'En progreso';
   } else if (filtroEstado === 'En riesgo') {
     textoFiltroSeleccionado = 'En riesgo';
+  } else if (filtroEstado === 'Sin misiones asignadas') {
+    textoFiltroSeleccionado = 'Sin misiones asignadas';
   }
 
   let estiloBotonFiltro = styles.filterToggle;
@@ -107,6 +110,7 @@ export const TablaEstudiantes: React.FC<TablaEstudiantesProps> = ({
               <button type="button" onClick={() => seleccionarFiltro('todos')} style={styles.filterMenuOption}>
                 Todos ({estudiantes.length})
               </button>
+              <button type="button" onClick={() => seleccionarFiltro('Sin misiones asignadas')} style={styles.filterMenuOption}>Sin misiones asignadas</button>
               <button type="button" onClick={() => seleccionarFiltro('Al dia')} style={styles.filterMenuOption}>
                 Al día
               </button>
@@ -128,6 +132,7 @@ export const TablaEstudiantes: React.FC<TablaEstudiantesProps> = ({
               <th style={styles.th}>Carrera</th>
               <th style={styles.th}>Misiones</th>
               <th style={styles.th}>Avance Global</th>
+              <th style={styles.th}>Puntos de inducción</th>
               <th style={styles.th}>Estado</th>
               <th style={{ ...styles.th, textAlign: 'right' }}>Acción</th>
             </tr>
@@ -135,7 +140,7 @@ export const TablaEstudiantes: React.FC<TablaEstudiantesProps> = ({
           <tbody>
             {estudiantesFiltrados.length === 0 ? (
               <tr>
-                <td colSpan={6} style={styles.emptyCell}>
+                <td colSpan={7} style={styles.emptyCell}>
                   No se encontraron estudiantes con los filtros aplicados.
                 </td>
               </tr>
@@ -150,7 +155,7 @@ export const TablaEstudiantes: React.FC<TablaEstudiantesProps> = ({
                 }
 
                 const estado = estudiante.estadoAtencion || estudiante.estado || 'En progreso';
-                let badgeClass = 'badge-en-progreso';
+                let badgeClass = estado === 'Sin misiones asignadas' ? 'badge-sin-misiones' : 'badge-en-progreso';
                 if (estado === 'Al dia') {
                   badgeClass = 'badge-al-dia';
                 } else if (estado === 'En riesgo') {
@@ -186,8 +191,11 @@ export const TablaEstudiantes: React.FC<TablaEstudiantesProps> = ({
                             style={{ width: `${avance}%` }}
                           />
                         </div>
-                        <span style={styles.progressPercent}>{avance}%</span>
+                        <span style={styles.progressPercent}>{total === 0 ? '—' : `${avance}%`}</span>
                       </div>
+                    </td>
+                    <td data-label="Puntos de inducción" style={styles.td}>
+                      <BarraPuntos estudiante={estudiante} />
                     </td>
                     <td data-label="Estado" style={styles.td}>
                       <span className={`badge ${badgeClass}`}>{estado}</span>

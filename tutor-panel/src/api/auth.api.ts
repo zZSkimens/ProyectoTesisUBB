@@ -11,6 +11,9 @@ export interface PerfilResponse {
 }
 
 export const authApi = {
+  async cerrarSesion(): Promise<void> {
+    await apiClient('/auth/logout', { method: 'POST' });
+  },
   async login(email: string, password: string): Promise<LoginResponse> {
     return apiClient<LoginResponse>('/auth/login', {
       method: 'POST',

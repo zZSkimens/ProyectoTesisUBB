@@ -1,7 +1,7 @@
 import type React from 'react';
 import { useState } from 'react';
 import { AlertCircle, ArrowRight, Lock, Mail } from 'lucide-react';
-import { useAuth } from '../context/AuthContext.js';
+import { useAuth } from '../context/useAuth.js';
 
 export const LoginPage: React.FC = () => {
   const { iniciarSesion } = useAuth();

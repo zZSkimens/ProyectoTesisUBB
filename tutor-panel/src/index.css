@@ -1,3 +1,32 @@
+.mission-drafts { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; font-family: inherit; font-size: .85rem; }
+.mission-drafts-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.mission-drafts-heading h3 { font-size: 1.25rem; font-weight: 700; color: var(--color-ubb-navy); margin: 0; }
+.mission-drafts p { color: var(--text-secondary); margin: .5rem 0; font-size: .85rem; line-height: 1.4; }
+.mission-drafts button { font-size: .85rem; }
+.mission-form h4, .mission-draft-card h4 { font-size: 1.05rem; font-weight: 700; color: var(--text-primary); }
+.mission-form { padding: 1rem; background: var(--bg-app); border-radius: 8px; margin: 1rem 0; }
+.mission-form fieldset { border: 0; min-width: 0; }
+.mission-form-grid, .mission-drafts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 1rem; }
+.mission-form label { display: flex; flex-direction: column; gap: .35rem; margin-top: .75rem; font-size: .85rem; font-weight: 700; }
+.mission-form input, .mission-form select, .mission-form textarea { width: 100%; padding: .65rem; border: 1px solid var(--border-subtle); border-radius: 6px; font-family: inherit; font-size: .95rem; font-weight: 400; line-height: 1.5; background: white; color: var(--text-primary); }
+.mission-form textarea { resize: vertical; }
+.student-points { min-width: 160px; margin: .5rem 0; font-size: .85rem; color: var(--text-secondary); }
+.student-points-label { display: flex; justify-content: space-between; margin-bottom: .4rem; }
+.student-points-track { height: 10px; position: relative; background: #e2e8f0; border-radius: 9999px; overflow: hidden; }
+.student-points-fill { height: 100%; background: var(--color-ubb-blue); border-radius: inherit; }
+.student-points-marker { position: absolute; top: 0; bottom: 0; width: 2px; background: #334155; }
+.student-points-status { display: block; font-size: .75rem; margin-top: .35rem; }
+.student-points-complete .student-points-fill { background: #16a34a; }
+.student-points-complete .student-points-status { color: #15803d; font-weight: 700; }
+.badge-sin-misiones { background: #f1f5f9; color: #475569; }
+.mission-form-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .75rem; margin-top: 1rem; }
+.mission-draft-card { border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1rem; overflow-wrap: anywhere; }
+.mission-draft-card h4 { margin-top: .75rem; }
+.mission-draft-card small { display: block; margin: .5rem 0 1rem; color: var(--text-secondary); font-size: .75rem; }
+.mission-draft-badge { background: #fff3cd; color: #775600; border-radius: 4px; padding: .2rem .5rem; font-size: .75rem; }
+.mission-message-error { color: #b91c1c; margin: .5rem 0; }
+.mission-drafts .mission-message-success { color: #166534; }
+
 @font-face {
   font-family: 'Tipo-UBB-Condensed';
   src: url('/fonts/Tipo-UBB-Light_Condensed.otf') format('opentype');

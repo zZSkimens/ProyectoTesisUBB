@@ -1,30 +1,66 @@
 import type React from 'react';
 import { useState } from 'react';
 import { Target, Users, Compass, HelpCircle, MessageSquare, ChevronDown, ChevronUp, UserCheck, Clock, Award } from 'lucide-react';
-import type { ActividadResumen } from '../types/index';
+import type { ActividadResumen, MisionDesactivada } from '../types/index';
+import { misionesApi } from '../api/misiones.api';
+
+type AccionAsignacion = 'desactivar' | 'reactivar' | 'quitar';
 
 export interface VistaActividadesProps {
   actividades: ActividadResumen[];
+  misionesDesactivadas: MisionDesactivada[];
   cargando?: boolean;
   onSelectEstudiante: (id: number) => void;
+  onAsignacionCambiada: (id: number, accion: AccionAsignacion) => void;
 }
 
 export const VistaActividades: React.FC<VistaActividadesProps> = ({
   actividades,
+  misionesDesactivadas,
   cargando = false,
   onSelectEstudiante,
+  onAsignacionCambiada,
 }) => {
   const [moduloFiltro, setModuloFiltro] = useState<string>('todos');
   const [actividadExpandidaId, setActividadExpandidaId] = useState<number | null>(null);
+  const [confirmarDesactivacionId, setConfirmarDesactivacionId] = useState<number | null>(null);
+  const [confirmarRetiroId, setConfirmarRetiroId] = useState<number | null>(null);
+  const [actualizandoId, setActualizandoId] = useState<number | null>(null);
+  const [errorActivacion, setErrorActivacion] = useState<{ id: number; mensaje: string } | null>(null);
 
   const modulosDisponibles = Array.from(
     new Set(actividades.map((a) => a.modulo))
   );
 
+  const moduloActivo = modulosDisponibles.includes(moduloFiltro) ? moduloFiltro : 'todos';
   let actividadesFiltradas = actividades;
-  if (moduloFiltro !== 'todos') {
-    actividadesFiltradas = actividades.filter((a) => a.modulo === moduloFiltro);
+  if (moduloActivo !== 'todos') {
+    actividadesFiltradas = actividades.filter((a) => a.modulo === moduloActivo);
   }
+
+  const actualizarAsignacion = async (id: number, accion: AccionAsignacion) => {
+    if (actualizandoId !== null) return;
+    setActualizandoId(id);
+    setErrorActivacion(null);
+    try {
+      if (accion === 'quitar') {
+        await misionesApi.quitarDeLista(id);
+      } else {
+        await misionesApi.actualizarActivacion(id, accion === 'reactivar');
+      }
+      setConfirmarDesactivacionId(null);
+      setConfirmarRetiroId(null);
+      if (accion === 'reactivar') setModuloFiltro('todos');
+      onAsignacionCambiada(id, accion);
+    } catch (error) {
+      setErrorActivacion({
+        id,
+        mensaje: error instanceof Error ? error.message : 'No se pudo actualizar la misión',
+      });
+    } finally {
+      setActualizandoId(null);
+    }
+  };
 
   const toggleExpandir = (id: number) => {
     if (actividadExpandidaId === id) {
@@ -51,6 +87,7 @@ export const VistaActividades: React.FC<VistaActividadesProps> = ({
     if (tipo === 'npc_dialogo') {
       return 'Diálogo con NPC';
     }
+    if (tipo === 'guiada') return 'Actividad guiada';
     return 'Exploración en campus';
   };
 
@@ -58,18 +95,6 @@ export const VistaActividades: React.FC<VistaActividadesProps> = ({
     return (
       <div style={styles.emptyContainer}>
         <p style={{ color: '#64748b' }}>Cargando actividades del programa...</p>
-      </div>
-    );
-  }
-
-  if (actividades.length === 0) {
-    return (
-      <div style={styles.emptyContainer}>
-        <Target size={40} color="#94a3b8" />
-        <h4 style={styles.emptyTitle}>No hay actividades de inducción registradas</h4>
-        <p style={styles.emptyText}>
-          Las misiones configuradas en la base de datos aparecerán en este panel.
-        </p>
       </div>
     );
   }
@@ -84,16 +109,16 @@ export const VistaActividades: React.FC<VistaActividadesProps> = ({
           </p>
         </div>
 
-        <div style={styles.filterGroup}>
+        {actividades.length > 0 && <div style={styles.filterGroup}>
           <button
             onClick={() => setModuloFiltro('todos')}
-            style={moduloFiltro === 'todos' ? styles.filterBtnActive : styles.filterBtn}
+            style={moduloActivo === 'todos' ? styles.filterBtnActive : styles.filterBtn}
           >
             <span>Todos los módulos ({actividades.length})</span>
           </button>
           {modulosDisponibles.map((mod) => {
             const count = actividades.filter((a) => a.modulo === mod).length;
-            const activo = moduloFiltro === mod;
+            const activo = moduloActivo === mod;
             return (
               <button
                 key={mod}
@@ -104,8 +129,16 @@ export const VistaActividades: React.FC<VistaActividadesProps> = ({
               </button>
             );
           })}
-        </div>
+        </div>}
       </div>
+
+      {actividades.length === 0 && (
+        <div style={styles.emptyContainer}>
+          <Target size={40} color="#94a3b8" />
+          <h4 style={styles.emptyTitle}>No tienes misiones activas</h4>
+          <p style={styles.emptyText}>Las misiones asignadas a tu lista aparecerán aquí cuando estén activas.</p>
+        </div>
+      )}
 
       <div style={styles.grid}>
         {actividadesFiltradas.map((act) => {
@@ -139,6 +172,9 @@ export const VistaActividades: React.FC<VistaActividadesProps> = ({
 
               <h4 style={styles.actTitle}>{act.titulo}</h4>
               <p style={styles.actDesc}>{act.descripcion}</p>
+              {act.condicionCumplimiento && (
+                <p style={styles.actDesc}><strong>Cómo se completa</strong> · {act.condicionCumplimiento}</p>
+              )}
 
               <div style={styles.progressSection}>
                 <div style={styles.progressHeader}>
@@ -182,6 +218,36 @@ export const VistaActividades: React.FC<VistaActividadesProps> = ({
                   </span>
                   {expandido ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </button>
+                {confirmarDesactivacionId === act.id ? (
+                  <div>
+                    <p style={styles.subtitle}>
+                      Esta misión dejará de contar para el avance de tus estudiantes. Se conservarán los puntos que ya ganaron.
+                    </p>
+                    {errorActivacion?.id === act.id && <p role="alert" className="mission-message-error">{errorActivacion.mensaje}</p>}
+                    <div style={styles.filterGroup}>
+                      <button type="button" className="btn-danger" disabled={actualizandoId !== null} onClick={() => void actualizarAsignacion(act.id, 'desactivar')}>
+                        {actualizandoId === act.id ? 'Desactivando…' : 'Confirmar desactivación'}
+                      </button>
+                      <button type="button" className="btn-secondary" disabled={actualizandoId !== null} onClick={() => setConfirmarDesactivacionId(null)}>
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    style={styles.expandBtn}
+                    disabled={actualizandoId !== null}
+                    onClick={() => {
+                      setErrorActivacion(null);
+                      setConfirmarRetiroId(null);
+                      setConfirmarDesactivacionId(act.id);
+                    }}
+                  >
+                    Desactivar misión para mi grupo
+                  </button>
+                )}
               </div>
 
               {expandido && (
@@ -243,6 +309,79 @@ export const VistaActividades: React.FC<VistaActividadesProps> = ({
           );
         })}
       </div>
+
+      <section style={styles.container} aria-labelledby="misiones-desactivadas-titulo">
+        <div style={styles.header}>
+          <div>
+            <h4 id="misiones-desactivadas-titulo" style={styles.title}>
+              Misiones desactivadas ({misionesDesactivadas.length})
+            </h4>
+            <p style={styles.subtitle}>
+              Al reactivar una misión, volverá a contar para el avance de tus estudiantes.
+            </p>
+          </div>
+        </div>
+        {misionesDesactivadas.length === 0 ? (
+          <p style={styles.emptyText}>No tienes misiones desactivadas.</p>
+        ) : (
+          <div style={styles.grid}>
+            {misionesDesactivadas.map((mision) => (
+              <div key={mision.id} style={styles.card}>
+                <div style={styles.cardTop}><span style={styles.moduleBadge}>{mision.modulo}</span></div>
+                <h5 style={styles.actTitle}>{mision.titulo}</h5>
+                {errorActivacion?.id === mision.id && (
+                  <p role="alert" className="mission-message-error">{errorActivacion.mensaje}</p>
+                )}
+                {confirmarRetiroId === mision.id ? (
+                  <div>
+                    <p style={styles.subtitle}>
+                      La misión desaparecerá de tu lista. Se conservarán los puntos que tus estudiantes ya ganaron.
+                    </p>
+                    <div style={styles.filterGroup}>
+                      <button
+                        type="button"
+                        className="btn-danger"
+                        disabled={actualizandoId !== null}
+                        onClick={() => void actualizarAsignacion(mision.id, 'quitar')}
+                      >
+                        {actualizandoId === mision.id ? 'Quitando…' : 'Confirmar retiro'}
+                      </button>
+                      <button type="button" className="btn-secondary" disabled={actualizandoId !== null} onClick={() => setConfirmarRetiroId(null)}>
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={styles.cardActionArea}>
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      style={styles.expandBtn}
+                      disabled={actualizandoId !== null}
+                      onClick={() => void actualizarAsignacion(mision.id, 'reactivar')}
+                    >
+                      {actualizandoId === mision.id ? 'Reactivando…' : 'Reactivar misión para mi grupo'}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      style={styles.expandBtn}
+                      disabled={actualizandoId !== null}
+                      onClick={() => {
+                        setErrorActivacion(null);
+                        setConfirmarDesactivacionId(null);
+                        setConfirmarRetiroId(mision.id);
+                      }}
+                    >
+                      Quitar de mi lista
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 };
@@ -418,6 +557,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   cardActionArea: {
     marginTop: 'auto',
+    display: 'grid',
+    gap: '0.5rem',
   },
   expandBtn: {
     width: '100%',

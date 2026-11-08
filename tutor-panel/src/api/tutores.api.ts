@@ -4,6 +4,7 @@ import type {
   MetricasDashboard,
   DetalleEstudianteResponse,
   ActividadResumen,
+  MisionDesactivada,
   ObservacionEstudiante,
   CentroAtencionData,
   CentroAtencionInput,
@@ -20,6 +21,7 @@ export interface ListarEstudiantesResponse {
 
 export interface ListarActividadesResponse {
   actividades: ActividadResumen[];
+  misionesDesactivadas: MisionDesactivada[];
 }
 
 export interface ObservacionesResponse {

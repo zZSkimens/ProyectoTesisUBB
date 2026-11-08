@@ -2,6 +2,7 @@ import type React from 'react';
 import { useEffect, useState } from 'react';
 import { Award, Calendar, Clock, X, PlusCircle, CheckCircle2, AlertCircle, Target, FileText, Trash2 } from 'lucide-react';
 import { tutoresApi } from '../api/tutores.api';
+import { BarraPuntos } from './BarraPuntos';
 import type { DetalleEstudianteResponse, ObservacionEstudiante } from '../types/index';
 
 export interface ModalEstudianteProps {
@@ -13,6 +14,8 @@ export interface ModalEstudianteProps {
 export const ModalEstudiante: React.FC<ModalEstudianteProps> = ({ estudianteId, onClose, onEstudianteEliminado }) => {
   const [detalle, setDetalle] = useState<DetalleEstudianteResponse | null>(null);
   const [observaciones, setObservaciones] = useState<ObservacionEstudiante[]>([]);
+  const [estadoBitacora, setEstadoBitacora] = useState<'cargando' | 'lista' | 'error'>('cargando');
+  const [intentoBitacora, setIntentoBitacora] = useState(0);
   const [cargando, setCargando] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,33 +36,51 @@ export const ModalEstudiante: React.FC<ModalEstudianteProps> = ({ estudianteId, 
   const [errorEliminacion, setErrorEliminacion] = useState<string | null>(null);
 
   useEffect(() => {
-    async function cargarFicha() {
-      if (!estudianteId) {
-        return;
-      }
+    if (!estudianteId) return;
+    let vigente = true;
 
-      setCargando(true);
-      setError(null);
-
-      try {
-        const [data, resObs] = await Promise.all([
-          tutoresApi.obtenerDetalleEstudiante(estudianteId),
-          tutoresApi.obtenerObservaciones(estudianteId).catch(() => ({ observaciones: [] })),
-        ]);
-
-        setDetalle(data);
-        if (resObs && resObs.observaciones) {
-          setObservaciones(resObs.observaciones);
+    tutoresApi.obtenerDetalleEstudiante(estudianteId)
+      .then((data) => {
+        if (vigente) setDetalle(data);
+      })
+      .catch((err: unknown) => {
+        if (vigente) {
+          setError(err instanceof Error ? err.message : 'No se pudo cargar la ficha del estudiante');
         }
-      } catch (err: any) {
-        setError(err.message || 'No se pudo cargar la ficha del estudiante');
-      } finally {
-        setCargando(false);
-      }
-    }
+      })
+      .finally(() => {
+        if (vigente) setCargando(false);
+      });
 
-    cargarFicha();
+    return () => { vigente = false; };
   }, [estudianteId]);
+
+  useEffect(() => {
+    if (!estudianteId) return;
+    let vigente = true;
+
+    tutoresApi.obtenerObservaciones(estudianteId)
+      .then(({ observaciones: registros }) => {
+        if (vigente) {
+          if (!Array.isArray(registros)) {
+            setEstadoBitacora('error');
+            return;
+          }
+          setObservaciones(registros);
+          setEstadoBitacora('lista');
+        }
+      })
+      .catch(() => {
+        if (vigente) setEstadoBitacora('error');
+      });
+
+    return () => { vigente = false; };
+  }, [estudianteId, intentoBitacora]);
+
+  const reintentarBitacora = () => {
+    setEstadoBitacora('cargando');
+    setIntentoBitacora((intento) => intento + 1);
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -74,7 +95,7 @@ export const ModalEstudiante: React.FC<ModalEstudianteProps> = ({ estudianteId, 
 
   const handleCrearObservacion = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!estudianteId) {
+    if (!estudianteId || guardandoObs || estadoBitacora === 'cargando') {
       return;
     }
 
@@ -101,7 +122,7 @@ export const ModalEstudiante: React.FC<ModalEstudianteProps> = ({ estudianteId, 
       });
 
       if (res && res.observacion) {
-        setObservaciones([res.observacion, ...observaciones]);
+        setObservaciones((registros) => [res.observacion, ...registros]);
       }
 
       setTituloObs(titulosObservacion[tipoObs][0]);
@@ -190,6 +211,7 @@ export const ModalEstudiante: React.FC<ModalEstudianteProps> = ({ estudianteId, 
                 </div>
               </div>
 
+              <BarraPuntos estudiante={detalle.estudiante} />
               <div style={styles.modalTabs}>
                 <button
                   type="button"
@@ -205,12 +227,13 @@ export const ModalEstudiante: React.FC<ModalEstudianteProps> = ({ estudianteId, 
                   style={tabModal === 'observaciones' ? styles.modalTabActive : styles.modalTab}
                 >
                   <FileText size={16} />
-                  <span>Bitácora de Observaciones ({observaciones.length})</span>
+                  <span>Bitácora de Observaciones{estadoBitacora === 'lista' && ` (${observaciones.length})`}</span>
                 </button>
               </div>
 
               {tabModal === 'misiones' && (
                 <div style={styles.missionsList}>
+                  {detalle.misiones.length === 0 && <p>Sin misiones asignadas.</p>}
                   {detalle.misiones.map((mision) => {
                     let badgeClass = 'badge-en-progreso';
                     let statusText = 'En progreso';
@@ -244,6 +267,9 @@ export const ModalEstudiante: React.FC<ModalEstudianteProps> = ({ estudianteId, 
                         </div>
 
                         <p style={styles.missionDesc}>{mision.descripcion}</p>
+                        {mision.condicionCumplimiento && (
+                          <p style={styles.missionDesc}><strong>Cómo se completa</strong> · {mision.condicionCumplimiento}</p>
+                        )}
 
                         <div style={styles.missionFooter}>
                           <div style={styles.footerItem}>
@@ -354,7 +380,7 @@ export const ModalEstudiante: React.FC<ModalEstudianteProps> = ({ estudianteId, 
                           type="submit"
                           className="btn-primary"
                           style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem' }}
-                          disabled={guardandoObs}
+                          disabled={guardandoObs || estadoBitacora === 'cargando'}
                         >
                           <PlusCircle size={15} />
                           <span>{guardandoObs ? 'Guardando...' : 'Guardar Observación'}</span>
@@ -364,8 +390,21 @@ export const ModalEstudiante: React.FC<ModalEstudianteProps> = ({ estudianteId, 
                   </div>
 
                   <div style={styles.obsHistoryList}>
-                    <h5 style={styles.obsHistoryTitle}>Historial de Acompañamiento ({observaciones.length})</h5>
-                    {observaciones.length === 0 ? (
+                    <h5 style={styles.obsHistoryTitle}>
+                      Historial de Acompañamiento{estadoBitacora === 'lista' && ` (${observaciones.length})`}
+                    </h5>
+                    {estadoBitacora === 'cargando' && (
+                      <p role="status" style={styles.obsEmptyText}>Cargando observaciones…</p>
+                    )}
+                    {estadoBitacora === 'error' && (
+                      <div>
+                        <p role="alert" style={styles.obsError}>No se pudo cargar la bitácora.</p>
+                        <button type="button" className="btn-secondary" onClick={reintentarBitacora} disabled={guardandoObs}>
+                          Reintentar
+                        </button>
+                      </div>
+                    )}
+                    {estadoBitacora === 'lista' && (observaciones.length === 0 ? (
                       <p style={styles.obsEmptyText}>No hay observaciones previas registradas para este estudiante.</p>
                     ) : (
                       observaciones.map((obs) => {
@@ -410,7 +449,7 @@ export const ModalEstudiante: React.FC<ModalEstudianteProps> = ({ estudianteId, 
                           </div>
                         );
                       })
-                    )}
+                    ))}
                   </div>
                 </div>
               )}

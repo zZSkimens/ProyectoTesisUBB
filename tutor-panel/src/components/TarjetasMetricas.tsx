@@ -64,8 +64,8 @@ export const TarjetasMetricas: React.FC<TarjetasMetricasProps> = ({ metricas }) 
         <div style={styles.content}>
           <span style={styles.label}>Avance Promedio Grupal</span>
           <div style={styles.progressRow}>
-            <h3 style={styles.value}>{promedioAvance}%</h3>
-            <span style={styles.helperBadge}>{alDia} al dia</span>
+            <h3 style={styles.value}>{totalMisiones === 0 ? '—' : `${promedioAvance}%`}</h3>
+            <span style={styles.helperBadge}>{totalMisiones === 0 ? 'Sin misiones asignadas' : `${alDia} al dia`}</span>
           </div>
           <div className="progress-bar-container" style={{ marginTop: '0.4rem' }}>
             <div

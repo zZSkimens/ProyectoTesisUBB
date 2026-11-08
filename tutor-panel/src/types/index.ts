@@ -40,6 +40,9 @@ export interface Estudiante {
   porcentajeAvance?: number;
   estadoAtencion?: string;
   puntosTotales?: number;
+  puntajeTotal?: number;
+  maximoPuntos?: number;
+  umbralMetaPuntos?: number;
   ultimoAcceso?: string | null;
   progresos?: ProgresoEstudiante[];
   promedioProgreso?: number;
@@ -72,6 +75,7 @@ export interface ActividadResumen {
   codigo: string;
   titulo: string;
   descripcion: string;
+  condicionCumplimiento?: string | null;
   modulo: string;
   tipo: string;
   puntosRecompensa: number;
@@ -83,6 +87,8 @@ export interface ActividadResumen {
   porcentajeCompletitud: number;
   estudiantesPendientes: EstudiantePendienteActividad[];
 }
+
+export type MisionDesactivada = Pick<ActividadResumen, 'id' | 'titulo' | 'modulo'>;
 
 export interface MetricasDashboard {
   totalEstudiantes: number;
@@ -101,6 +107,7 @@ export interface MisionDetalleEstudiante {
   modulo?: string;
   titulo: string;
   descripcion: string;
+  condicionCumplimiento?: string | null;
   estado: 'completada' | 'en_progreso' | 'pendiente' | string;
   fechaCompletado?: string | null;
   puntajeObtenido: number;
