@@ -31,7 +31,7 @@ El sistema permite integrar la experiencia de inducción estudiantil gamificada 
 
 El Backend proporciona los servicios y la lógica de negocio central del sistema:
 
-- **Autenticación y Seguridad**: Inicio de sesión mediante JSON Web Tokens (JWT) y cifrado seguro de contraseñas con `bcryptjs`.
+- **Autenticación y Seguridad**: Inicio de sesión con JWT, invalidación del token al cerrar sesión y protección de contraseñas con `bcryptjs`.
 - **Gestión de Tutores y Métricas**: Endpoints para calcular en tiempo real métricas clave (total de alumnos asignados, estudiantes al día, en progreso y en riesgo).
 - **Nómina y Ficha de Estudiantes**: Consulta de estudiantes asignados por tutor y detalle individual de avance en misiones y desafíos de inducción.
 - **Persistencia de Base de Datos**: Integración con PostgreSQL gestionada a través de Drizzle ORM y scripts de inicialización de datos de prueba (`seed.js`).
@@ -44,6 +44,7 @@ El Frontend (`tutor-panel`) ofrece una interfaz de usuario moderna basada en la 
 - **Dashboard y Métricas**: Tarjetas visuales de estado y semáforo de riesgo estudiantil.
 - **Nómina de Estudiantes**: Tabla con búsqueda dinámica por nombre o RUT, filtros por estado (Al día, En progreso, En riesgo) y barra de progreso de avance.
 - **Ficha del Estudiante**: Modal detallado con datos institucionales en orden vertical y lista de misiones completadas/pendientes.
+- **Misiones de inducción**: Desde Actividades, cada tutor puede crear borradores, publicar misiones para su grupo y gestionar su disponibilidad. La nómina y la ficha muestran el avance y los puntos de cada estudiante.
 - **Perfil de Tutor**: Menú de opciones de cuenta, edición de datos personales y carga de foto de perfil (PNG, JPG, JPEG, WEBP).
 - **Identidad Gráfica Oficial**: Tipografía institucional `Tipo-UBB-Condensed` y logos oficiales de la Dirección General de Comunicación Estratégica (DGCE).
 
@@ -145,6 +146,7 @@ HOST=localhost
 PORT=3000
 
 # Base de datos PostgreSQL
+DB_HOST=localhost
 DB_PORT=5432
 DB_USERNAME=postgres
 PASSWORD=tu_contraseña
@@ -155,7 +157,13 @@ ACCESS_TOKEN_SECRET=tu_clave_secreta_jwt
 cookieKey=tu_clave_de_cookie
 ```
 
-4. Ejecuta la carga de datos de prueba iniciales:
+4. Aplica las migraciones con PostgreSQL disponible antes de iniciar el backend:
+
+```bash
+npm run db:migrate
+```
+
+Para una base nueva de desarrollo, puedes cargar los datos de prueba:
 
 ```bash
 npm run db:seed
