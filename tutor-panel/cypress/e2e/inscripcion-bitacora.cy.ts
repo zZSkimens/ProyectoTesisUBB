@@ -1,29 +1,6 @@
 /// <reference types="cypress" />
 
-const tutorEmail = Cypress.expose('tutorEmail') as string;
-
-let estudianteCreadoId: number | null = null;
-let tokenSesion: string | null = null;
-
-function iniciarSesion(): void {
-  expect(tutorEmail, 'correo de la cuenta tutor definida para Cypress').to.be.a('string').and.not.be.empty;
-
-  cy.env(['tutorPassword']).then(({ tutorPassword }) => {
-    expect(tutorPassword, 'contraseña de la cuenta tutor definida para Cypress').to.be.a('string').and.not.be.empty;
-
-    cy.request('/api/status').its('status').should('equal', 200);
-
-    cy.visit('/');
-    cy.get('input[placeholder="ejemplo@alumnos.ubiobio.cl"]').type(tutorEmail);
-    cy.get('input[type="password"]').type(tutorPassword, { log: false });
-    cy.contains('button', 'Ingresar al Panel').click();
-    cy.contains('button', 'Nómina de Estudiantes', { timeout: 15000 }).should('be.visible');
-    cy.window().then((ventana) => {
-      tokenSesion = ventana.sessionStorage.getItem('token');
-      expect(tokenSesion, 'sesión autenticada').to.be.a('string').and.not.be.empty;
-    });
-  });
-}
+import { iniciarSesion, limpiarTutorE2E } from '../support/tutor';
 
 function crearRutValidoUnico(): string {
   const cuerpo = String(20_000_000 + Math.floor(Math.random() * 9_000_000));
@@ -43,23 +20,9 @@ function abrirSeccion(nombre: string): void {
 }
 
 describe('E2E: inscripción de estudiante y bitácora', () => {
-  beforeEach(() => {
-    estudianteCreadoId = null;
-    tokenSesion = null;
-  });
+  afterEach(limpiarTutorE2E);
 
-  afterEach(() => {
-    if (tokenSesion && estudianteCreadoId !== null) {
-      cy.request({
-        method: 'DELETE',
-        url: `/api/tutores/estudiantes/${estudianteCreadoId}`,
-        headers: { Authorization: `Bearer ${tokenSesion}` },
-        failOnStatusCode: false,
-      });
-    }
-  });
-
-  it('inicia sesión, inscribe un estudiante y registra una observación en su bitácora', () => {
+  it('inscribe un estudiante, recupera la bitácora tras un fallo y conserva la observación', () => {
     const sufijo = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
     const nombre = `E2E${sufijo} Prueba`;
     const email = `e2e${sufijo}.prueba2601@alumnos.ubiobio.cl`;
@@ -76,17 +39,37 @@ describe('E2E: inscripción de estudiante y bitácora', () => {
     cy.contains('button', 'Registrar Estudiante').click();
     cy.wait('@crearEstudiante').then(({ response }) => {
       expect(response?.statusCode).to.equal(201);
-      estudianteCreadoId = response?.body.estudiante.id;
-      expect(estudianteCreadoId).to.be.a('number');
+      expect(response?.body.estudiante.id).to.be.a('number');
     });
 
+    let fallarConsulta = true;
+    cy.intercept('GET', '**/api/tutores/estudiantes/*/observaciones', (solicitud) => {
+      if (fallarConsulta) {
+        solicitud.alias = 'bitacoraNoDisponible';
+        solicitud.reply({ statusCode: 503, body: { error: 'Bitácora no disponible en esta consulta' } });
+      } else {
+        solicitud.alias = 'cargarBitacora';
+        solicitud.continue();
+      }
+    });
     cy.contains('tr', nombre).should('be.visible').within(() => {
       cy.contains('button', 'Ver Ficha').click();
     });
+    cy.wait('@bitacoraNoDisponible').its('response.statusCode').should('equal', 503);
     cy.contains('button', 'Bitácora de Observaciones').click();
+    cy.contains('h2', 'Ficha de Progreso del Estudiante').should('be.visible');
+    cy.contains('[role="alert"]', 'No se pudo cargar la bitácora').should('be.visible');
+    cy.contains('No hay observaciones previas registradas').should('not.exist');
+
+    cy.then(() => { fallarConsulta = false; });
+    cy.contains('button', 'Reintentar').click();
+    cy.wait('@cargarBitacora').its('response.statusCode').should('equal', 200);
+    cy.contains('No hay observaciones previas registradas').should('be.visible');
+    cy.contains('[role="alert"]', 'No se pudo cargar la bitácora').should('not.exist');
+
     cy.contains('h5', 'Registrar Nueva Observación o Compromiso').parent().within(() => {
-      cy.get('select').eq(1).select('compromiso');
-      cy.get('select').eq(0).select('Compromiso académico');
+      cy.contains('label', 'Tipo').parent().find('select').select('compromiso');
+      cy.contains('label', 'Título / Motivo').parent().find('select').select('Compromiso académico');
       cy.get('textarea').type('Registro E2E para comprobar la bitácora del estudiante.');
       cy.get('input[placeholder="Ej: Realizar la misión DDE antes del próximo taller"]')
         .type('Completar una actividad antes de la próxima tutoría.');
