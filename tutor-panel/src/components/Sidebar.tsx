@@ -1,7 +1,7 @@
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { LayoutDashboard, Users, Target, Clock, LogOut, UserRound, X } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { ModalPerfilTutor } from './ModalPerfilTutor';
 
 export type SeccionPanel = 'dashboard' | 'estudiantes' | 'actividades' | 'consultas';
@@ -14,7 +14,12 @@ export interface SidebarProps {
   onCerrar?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({
+export const Sidebar: React.FC<SidebarProps> = (props) => {
+  const { usuario } = useAuth();
+  return <SidebarPorUsuario key={usuario?.id ?? 'sin-usuario'} {...props} />;
+};
+
+const SidebarPorUsuario: React.FC<SidebarProps> = ({
   seccionActiva,
   onCambiarSeccion,
   conteoAlertas = 0,
@@ -23,15 +28,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { usuario, cerrarSesion } = useAuth();
   const [modalPerfilAbierto, setModalPerfilAbierto] = useState<boolean>(false);
-  const [fotoPerfil, setFotoPerfil] = useState<string | null>(null);
-
-  useEffect(() => {
-    let storageKey = 'tutor_foto_perfil_default';
-    if (usuario && usuario.id) {
-      storageKey = 'tutor_foto_perfil_' + usuario.id;
-    }
-    setFotoPerfil(localStorage.getItem(storageKey));
-  }, [usuario?.id]);
+  const [fotoPerfil, setFotoPerfil] = useState<string | null>(() => {
+    const storageKey = usuario?.id
+      ? 'tutor_foto_perfil_' + usuario.id
+      : 'tutor_foto_perfil_default';
+    return localStorage.getItem(storageKey);
+  });
 
   let nombreTutor = 'Tutor UBB';
   if (usuario && usuario.nombre) {

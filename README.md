@@ -36,7 +36,7 @@ El sistema conecta una experiencia gamificada de inducción con herramientas de 
 
 El backend es una API REST desarrollada con Node.js, Express y TypeScript. Drizzle ORM administra el acceso a PostgreSQL.
 
-- **Autenticación y autorización**: inicio de sesión con JWT, contraseñas almacenadas con `bcryptjs` y rutas protegidas para los roles `tutor` y `admin`.
+- **Autenticación y autorización**: inicio de sesión con JWT, contraseñas almacenadas con `bcryptjs` y rutas protegidas para los roles `tutor` y `admin`. Al cerrar sesión, el token queda invalidado.
 - **Estudiantes**: inscripción de estudiantes novatos, validación del RUT y correo institucional, prevención de duplicados, búsqueda y filtros por estado de avance.
 - **Seguimiento**: dashboard con métricas y alertas, resumen de misiones y ficha individual con progreso.
 - **Bitácora de tutoría**: registro y consulta de observaciones, alertas y compromisos.
@@ -52,7 +52,7 @@ El frontend es una SPA desarrollada con React y Vite, ubicada en `tutor-panel/`.
 - **Navegación**: sidebar con secciones de dashboard, nómina, actividades y centros de atención.
 - **Dashboard**: métricas del grupo y alertas tempranas de estudiantes o actividades que requieren seguimiento.
 - **Nómina y ficha**: búsqueda, filtros, inscripción, detalle del avance, observaciones y eliminación de estudiantes asignados al tutor.
-- **Actividades**: seguimiento de las misiones de inducción y del avance de la cohorte.
+- **Actividades**: cada tutor puede crear borradores, publicar misiones para su grupo y consultar el avance y los puntos de sus estudiantes.
 - **Consultas**: configuración y vista previa de los centros de atención y sus horarios.
 - **Diseño adaptable**: las vistas, fichas y formularios se ajustan a pantallas móviles y de escritorio.
 - **Identidad visual**: utiliza logos y tipografías institucionales guardados en `tutor-panel/public/`.

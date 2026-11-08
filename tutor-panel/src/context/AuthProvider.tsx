@@ -1,8 +1,7 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { authApi } from '../api/auth.api';
 import type { Usuario, AuthContextType } from '../types/index';
-
-const AuthContext = createContext<AuthContextType | null>(null);
+import { AuthContext } from './AuthContext';
 
 export interface AuthProviderProps {
   children: ReactNode;
@@ -39,6 +38,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [cargando, setCargando] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  const limpiarSesion = useCallback(() => {
+    setUsuario(null);
+    setToken(null);
+    setError(null);
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('usuario');
+    localStorage.removeItem('token');
+    localStorage.removeItem('usuario');
+  }, []);
+
   useEffect(() => {
     async function verificarSesion() {
       const tokenGuardado = sessionStorage.getItem('token');
@@ -54,14 +63,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
       } catch (err: any) {
         console.warn('[AUTH] Sesion expirada o invalida:', err.message);
-        cerrarSesion();
+        limpiarSesion();
       } finally {
         setCargando(false);
       }
     }
 
     verificarSesion();
-  }, []);
+  }, [limpiarSesion]);
 
   const iniciarSesion = async (email: string, password: string): Promise<Usuario> => {
     setError(null);
@@ -81,14 +90,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const cerrarSesion = () => {
-    setUsuario(null);
-    setToken(null);
-    setError(null);
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('usuario');
-    localStorage.removeItem('token');
-    localStorage.removeItem('usuario');
+  const cerrarSesion = async () => {
+    try {
+      await authApi.cerrarSesion();
+      limpiarSesion();
+    } catch {
+      setError('No se pudo cerrar la sesion en el servidor. Intenta nuevamente.');
+      window.alert('No se pudo cerrar la sesion en el servidor. Intenta nuevamente.');
+    }
   };
 
   let estaAutenticado = false;
@@ -121,12 +130,3 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = (): AuthContextType => {
-  const contexto = useContext(AuthContext);
-  if (!contexto) {
-    throw new Error('useAuth debe ser utilizado dentro de un AuthProvider');
-  }
-  return contexto;
-};
-
-export default AuthContext;

@@ -1,7 +1,7 @@
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { LogOut, Menu, User, UserCheck } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { ModalPerfilTutor } from './ModalPerfilTutor';
 
 export const Navbar: React.FC = () => {

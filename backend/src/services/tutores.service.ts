@@ -8,9 +8,9 @@ import {
   progresoEstudiantes,
 } from '../../db/schema.js';
 import { normalizarRut } from '../utils/rut.js';
-
-const UMBRAL_ESTUDIANTE_EN_RIESGO = 35;
-const UMBRAL_ESTUDIANTE_AL_DIA = 50;
+import { resumirProgreso } from '../utils/progreso.js';
+import { resumirPuntos } from '../utils/puntos.js';
+import { misionesService } from './misiones.service.js';
 
 export interface ObservacionItem {
   id: number;
@@ -56,10 +56,7 @@ export const tutoresService = {
 
     const totalEstudiantes = alumnos.length;
 
-    const misionesActivas = await db
-      .select()
-      .from(misiones)
-      .where(eq(misiones.activo, true));
+    const misionesActivas = await misionesService.listarActivas(tutorId);
 
     const totalMisiones = misionesActivas.length;
 
@@ -95,17 +92,13 @@ export const tutoresService = {
     }> = [];
 
     for (const alumno of alumnos) {
-      const completadas = progresosGrupo.filter(
-        (p) => p.estudianteId === alumno.id && p.estado === 'completada'
-      ).length;
-
-      let porcentaje = 0;
-      if (totalMisiones > 0) {
-        porcentaje = Math.round((completadas / totalMisiones) * 100);
-      }
+      const resumen = resumirProgreso(misionesActivas.map((m) => m.id),
+        progresosGrupo.filter((p) => p.estudianteId === alumno.id));
+      const completadas = resumen.completadas;
+      const porcentaje = resumen.porcentajeAvance;
       sumaPorcentajes += porcentaje;
 
-      if (porcentaje < UMBRAL_ESTUDIANTE_EN_RIESGO) {
+      if (resumen.estadoAtencion === 'En riesgo') {
         enRiesgoCount++;
         alertas.push({
           id: `riesgo-${alumno.id}`,
@@ -117,15 +110,15 @@ export const tutoresService = {
           estudianteNombre: alumno.nombre,
           porcentaje,
         });
-      } else if (porcentaje >= UMBRAL_ESTUDIANTE_AL_DIA) {
+      } else if (resumen.estadoAtencion === 'Al dia') {
         alDiaCount++;
       }
     }
 
     for (const mision of misionesActivas) {
-      const completadasMision = progresosGrupo.filter(
+      const completadasMision = new Set(progresosGrupo.filter(
         (p) => p.misionId === mision.id && p.estado === 'completada'
-      ).length;
+      ).map((p) => p.estudianteId)).size;
 
       let porcentajeMision = 0;
       if (totalEstudiantes > 0) {
@@ -165,11 +158,10 @@ export const tutoresService = {
 
     const totalEstudiantes = alumnos.length;
 
-    const listaMisiones = await db
-      .select()
-      .from(misiones)
-      .where(eq(misiones.activo, true))
-      .orderBy(misiones.orden);
+    const asignaciones = await misionesService.listarAsignadas(tutorId);
+    const listaMisiones = asignaciones.filter(({ activa }) => activa).map(({ mision }) => mision);
+    const misionesDesactivadas = asignaciones.filter(({ activa }) => !activa)
+      .map(({ mision: { id, titulo, modulo } }) => ({ id, titulo, modulo }));
 
     const studentIds = alumnos.map((a) => a.id);
     let progresosGrupo: typeof progresoEstudiantes.$inferSelect[] = [];
@@ -180,10 +172,11 @@ export const tutoresService = {
         .where(inArray(progresoEstudiantes.estudianteId, studentIds));
     }
 
-    return listaMisiones.map((mision) => {
+    const actividades = listaMisiones.map((mision) => {
       const progresosMision = progresosGrupo.filter((p) => p.misionId === mision.id);
-      const completadas = progresosMision.filter((p) => p.estado === 'completada').length;
-      const enProgreso = progresosMision.filter((p) => p.estado === 'en_progreso').length;
+      const completaron = new Set(progresosMision.filter((p) => p.estado === 'completada').map((p) => p.estudianteId));
+      const completadas = completaron.size;
+      const enProgreso = new Set(progresosMision.filter((p) => p.estado === 'en_progreso' && !completaron.has(p.estudianteId)).map((p) => p.estudianteId)).size;
       let noIniciadas = totalEstudiantes - completadas - enProgreso;
       if (noIniciadas < 0) {
         noIniciadas = 0;
@@ -196,11 +189,7 @@ export const tutoresService = {
 
       const estudiantesPendientes = alumnos
         .filter((alumno) => {
-          const prog = progresosMision.find((p) => p.estudianteId === alumno.id);
-          if (!prog || prog.estado !== 'completada') {
-            return true;
-          }
-          return false;
+          return !completaron.has(alumno.id);
         })
         .map((alumno) => {
           const prog = progresosMision.find((p) => p.estudianteId === alumno.id);
@@ -222,6 +211,7 @@ export const tutoresService = {
         codigo: mision.codigo,
         titulo: mision.titulo,
         descripcion: mision.descripcion,
+        condicionCumplimiento: mision.condicionCumplimiento,
         modulo: mision.modulo,
         tipo: mision.tipo,
         puntosRecompensa: mision.puntosRecompensa,
@@ -234,6 +224,7 @@ export const tutoresService = {
         estudiantesPendientes,
       };
     });
+    return { actividades, misionesDesactivadas };
   },
 
   async listarEstudiantes(tutorId: number, filtros?: { busqueda?: string; estado?: string }) {
@@ -242,10 +233,11 @@ export const tutoresService = {
       .from(estudiantes)
       .where(eq(estudiantes.tutorId, tutorId));
 
-    const misionesActivas = await db
-      .select()
-      .from(misiones)
-      .where(eq(misiones.activo, true));
+    const [misionesActivas, misionesPublicadas] = await Promise.all([
+      misionesService.listarActivas(tutorId),
+      db.select({ id: misiones.id, puntosRecompensa: misiones.puntosRecompensa }).from(misiones)
+        .where(eq(misiones.estadoPublicacion, 'publicada')),
+    ]);
     const totalMisiones = misionesActivas.length;
 
     const studentIds = alumnos.map((alumno) => alumno.id);
@@ -259,21 +251,8 @@ export const tutoresService = {
 
     let lista = alumnos.map((alumno) => {
       const misProgresos = progresosGrupo.filter((p) => p.estudianteId === alumno.id);
-      const completadas = misProgresos.filter((p) => p.estado === 'completada').length;
-      const enProgreso = misProgresos.filter((p) => p.estado === 'en_progreso').length;
-      const puntajeTotal = misProgresos.reduce((sum, p) => sum + p.puntajeObtenido, 0);
-
-      let porcentajeAvance = 0;
-      if (totalMisiones > 0) {
-        porcentajeAvance = Math.round((completadas / totalMisiones) * 100);
-      }
-
-      let estadoAtencion = 'Al dia';
-      if (porcentajeAvance < UMBRAL_ESTUDIANTE_EN_RIESGO) {
-        estadoAtencion = 'En riesgo';
-      } else if (porcentajeAvance < UMBRAL_ESTUDIANTE_AL_DIA) {
-        estadoAtencion = 'En progreso';
-      }
+      const { completadas, enProgreso, porcentajeAvance, estadoAtencion } =
+        resumirProgreso(misionesActivas.map((m) => m.id), misProgresos);
 
       return {
         id: alumno.id,
@@ -286,7 +265,7 @@ export const tutoresService = {
         misionesCompletadas: completadas,
         misionesEnProgreso: enProgreso,
         porcentajeAvance,
-        puntajeTotal,
+        ...resumirPuntos(misionesPublicadas, misProgresos),
         estadoAtencion,
       };
     });
@@ -517,7 +496,11 @@ export const tutoresService = {
       throw new Error('Estudiante no encontrado o no asignado a este tutor');
     }
 
-    const listaMisiones = await db.select().from(misiones).orderBy(misiones.orden);
+    const [listaMisiones, misionesPublicadas] = await Promise.all([
+      misionesService.listarActivas(tutorId),
+      db.select({ id: misiones.id, puntosRecompensa: misiones.puntosRecompensa }).from(misiones)
+        .where(eq(misiones.estadoPublicacion, 'publicada')),
+    ]);
 
     const progresosAlumno = await db
       .select()
@@ -544,6 +527,7 @@ export const tutoresService = {
         codigo: mision.codigo,
         titulo: mision.titulo,
         descripcion: mision.descripcion,
+        condicionCumplimiento: mision.condicionCumplimiento,
         modulo: mision.modulo,
         tipo: mision.tipo,
         puntosMaximos: mision.puntosRecompensa,
@@ -563,6 +547,7 @@ export const tutoresService = {
         email: alumno.email,
         carrera: alumno.carrera,
         añoIngreso: alumno.anioIngreso,
+        ...resumirPuntos(misionesPublicadas, progresosAlumno),
       },
       misiones: detalleMisiones,
     };
