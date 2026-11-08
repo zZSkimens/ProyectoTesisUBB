@@ -163,8 +163,7 @@ export const tutoresController = {
         res.status(401).json({ error: 'No autenticado' });
         return;
       }
-      const actividades = await tutoresService.obtenerResumenActividades(req.usuario.id);
-      res.json({ actividades });
+      res.json(await tutoresService.obtenerResumenActividades(req.usuario.id));
     } catch (error) {
       responderError(res, error, 'resumen de actividades');
     }
