@@ -17,6 +17,15 @@ describe.skipIf(process.env.RUN_INTEGRATION_TESTS !== 'true')('misiones por grup
   beforeAll(async () => { contexto = await crearContextoTutorTest(); }, 30_000);
   afterAll(async () => { if (contexto) await contexto.cerrar(); }, 30_000);
 
+  it('rechaza IDs fuera del rango de PostgreSQL al editar y publicar', async () => {
+    const api = request(contexto.app);
+    const ruta = '/api/misiones/borradores/2147483648';
+    const autorizacion = `Bearer ${contexto.token}`;
+
+    await api.put(ruta).set('Authorization', autorizacion).send(borrador).expect(400);
+    await api.post(`${ruta}/publicar`).set('Authorization', autorizacion).send(condicion).expect(400);
+  });
+
   it('publica el mismo borrador y permite desactivar, reactivar y quitar solo para el grupo propio', async () => {
     const otroTutor = await contexto.crearOtroTutor();
     const { db } = await import('../../../db/connection.js');
