@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
+import { ErrorAplicacion } from '../utils/errorAplicacion.js';
 import jwt from 'jsonwebtoken';
 import { config } from '../config/env.js';
 import type { UsuarioPayload } from '../types/express.js';
@@ -45,15 +46,14 @@ export const verificarToken = async (req: Request, res: Response, next: NextFunc
     }
     const usuario = await authService.obtenerPerfil(payload.id);
     if (!usuario.activo) {
-      res.status(401).json({ error: 'Esta cuenta ha sido deshabilitada' });
-      return;
+      throw new ErrorAplicacion('SESION_INVALIDA', 'Esta cuenta ha sido deshabilitada');
     }
     req.usuario = { ...payload, ...usuario };
     req.sesionAutenticada = { token, expiracion: payload.exp };
     next();
   } catch (error) {
-    if (error instanceof Error && error.message === 'Usuario no encontrado') {
-      res.status(401).json({ error: 'La cuenta ya no existe' });
+    if (error instanceof ErrorAplicacion && error.codigo === 'USUARIO_NO_ENCONTRADO') {
+      next(new ErrorAplicacion('SESION_INVALIDA', 'La cuenta ya no existe'));
       return;
     }
     next(error);

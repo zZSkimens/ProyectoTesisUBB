@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { ErrorAplicacion } from '../utils/errorAplicacion.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { eq } from 'drizzle-orm';
@@ -36,11 +37,11 @@ export const authService = {
 
     if (!usuario) {
       console.warn(`[AUTH] Intento de login fallido: usuario no encontrado para email "${emailNormalizado}"`);
-      throw new Error('Credenciales invalidas');
+      throw new ErrorAplicacion('CREDENCIALES_INVALIDAS', 'Credenciales invalidas');
     }
 
     if (!usuario.activo) {
-      throw new Error('Esta cuenta ha sido deshabilitada');
+      throw new ErrorAplicacion('CUENTA_DESHABILITADA', 'Esta cuenta ha sido deshabilitada');
     }
 
     let passwordValida = await bcrypt.compare(password, usuario.passwordHash);
@@ -50,7 +51,7 @@ export const authService = {
 
     if (!passwordValida) {
       console.warn(`[AUTH] Contrasena incorrecta para el usuario ${usuario.email}`);
-      throw new Error('Credenciales invalidas');
+      throw new ErrorAplicacion('CREDENCIALES_INVALIDAS', 'Credenciales invalidas');
     }
 
     const payload = {
@@ -86,7 +87,7 @@ export const authService = {
       .limit(1);
 
     if (!usuario) {
-      throw new Error('Usuario no encontrado');
+      throw new ErrorAplicacion('USUARIO_NO_ENCONTRADO', 'Usuario no encontrado');
     }
 
     return usuario;

@@ -71,6 +71,13 @@
       "when": 1794073662319,
       "tag": "0009_misiones_por_tutor",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794764868422,
+      "tag": "0010_fotos_perfil",
+      "breakpoints": true
     }
   ]
 }

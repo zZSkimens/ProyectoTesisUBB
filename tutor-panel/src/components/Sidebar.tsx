@@ -26,14 +26,8 @@ const SidebarPorUsuario: React.FC<SidebarProps> = ({
   abierto = false,
   onCerrar,
 }) => {
-  const { usuario, cerrarSesion } = useAuth();
+  const { usuario, cerrarSesion, fotoPerfil } = useAuth();
   const [modalPerfilAbierto, setModalPerfilAbierto] = useState<boolean>(false);
-  const [fotoPerfil, setFotoPerfil] = useState<string | null>(() => {
-    const storageKey = usuario?.id
-      ? 'tutor_foto_perfil_' + usuario.id
-      : 'tutor_foto_perfil_default';
-    return localStorage.getItem(storageKey);
-  });
 
   let nombreTutor = 'Tutor UBB';
   if (usuario && usuario.nombre) {
@@ -41,8 +35,8 @@ const SidebarPorUsuario: React.FC<SidebarProps> = ({
   }
 
   let avatarTutor = <span>{nombreTutor.charAt(0).toUpperCase()}</span>;
-  if (fotoPerfil) {
-    avatarTutor = <img src={fotoPerfil} alt="" style={styles.avatarImage} />;
+  if (fotoPerfil.foto) {
+    avatarTutor = <img src={fotoPerfil.foto} alt="" style={styles.avatarImage} />;
   }
 
   let badgeDashboard: string | null = null;
@@ -193,7 +187,6 @@ const SidebarPorUsuario: React.FC<SidebarProps> = ({
         <ModalPerfilTutor
           usuario={usuario}
           fotoPerfil={fotoPerfil}
-          onFotoActualizada={setFotoPerfil}
           onClose={() => setModalPerfilAbierto(false)}
         />
       )}

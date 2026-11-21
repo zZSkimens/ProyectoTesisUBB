@@ -2,25 +2,25 @@ import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Camera, Trash2, User, X } from 'lucide-react';
-import type { Usuario } from '../types/index.js';
+import type { FotoPerfil, Usuario } from '../types/index.js';
 
 export interface ModalPerfilTutorProps {
   usuario: Usuario | null;
-  fotoPerfil: string | null;
-  onFotoActualizada: (nuevaFoto: string | null) => void;
+  fotoPerfil: FotoPerfil;
   onClose: () => void;
 }
 
 export const ModalPerfilTutor: React.FC<ModalPerfilTutorProps> = ({
   usuario,
   fotoPerfil,
-  onFotoActualizada,
   onClose,
 }) => {
-  const [foto, setFoto] = useState<string | null>(fotoPerfil);
+  const { foto, cargando, guardando } = fotoPerfil;
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
   const [errorArchivo, setErrorArchivo] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const controlesDeshabilitados = !usuario || cargando || guardando;
+  const mensajeError = errorArchivo ?? fotoPerfil.error;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -33,15 +33,13 @@ export const ModalPerfilTutor: React.FC<ModalPerfilTutorProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
-  const handleSeleccionarArchivo = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSeleccionarArchivo = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const archivo = e.currentTarget.files?.[0];
+    e.currentTarget.value = '';
+    if (!archivo || controlesDeshabilitados) return;
+
     setErrorArchivo(null);
     setMensajeExito(null);
-
-    const archivo = e.target.files && e.target.files[0];
-    if (!archivo) {
-      return;
-    }
-
     const formatosPermitidos = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
     if (!formatosPermitidos.includes(archivo.type.toLowerCase())) {
       setErrorArchivo('Formato no valido. Por favor seleccione un archivo PNG, JPG o WEBP.');
@@ -54,49 +52,26 @@ export const ModalPerfilTutor: React.FC<ModalPerfilTutorProps> = ({
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event: ProgressEvent<FileReader>) => {
-      const dataUrl = event.target?.result as string;
-      if (dataUrl) {
-        setFoto(dataUrl);
-
-        let storageKey = 'tutor_foto_perfil_default';
-        if (usuario && usuario.id) {
-          storageKey = 'tutor_foto_perfil_' + usuario.id;
-        }
-        localStorage.setItem(storageKey, dataUrl);
-
-        if (onFotoActualizada) {
-          onFotoActualizada(dataUrl);
-        }
-
-        setMensajeExito('Foto de perfil actualizada correctamente.');
-      }
-    };
-
-    reader.readAsDataURL(archivo);
+    try {
+      await fotoPerfil.guardar(archivo);
+      setMensajeExito('Foto de perfil actualizada correctamente.');
+    } catch (error) {
+      setErrorArchivo(error instanceof Error ? error.message : 'No se pudo guardar la foto de perfil.');
+    }
   };
 
-  const handleEliminarFoto = () => {
-    setFoto(null);
+  const handleEliminarFoto = async () => {
+    if (controlesDeshabilitados) return;
+
     setMensajeExito(null);
     setErrorArchivo(null);
 
-    let storageKey = 'tutor_foto_perfil_default';
-    if (usuario && usuario.id) {
-      storageKey = 'tutor_foto_perfil_' + usuario.id;
+    try {
+      await fotoPerfil.eliminar();
+      setMensajeExito('Foto eliminada.');
+    } catch (error) {
+      setErrorArchivo(error instanceof Error ? error.message : 'No se pudo eliminar la foto de perfil.');
     }
-    localStorage.removeItem(storageKey);
-
-    if (onFotoActualizada) {
-      onFotoActualizada(null);
-    }
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-
-    setMensajeExito('Foto eliminada.');
   };
 
   let nombreTutor = 'Tutor Institucional';
@@ -122,7 +97,7 @@ export const ModalPerfilTutor: React.FC<ModalPerfilTutorProps> = ({
           </button>
         </div>
         <div style={styles.body}>
-          <div style={styles.photoSection}>
+          <div style={styles.photoSection} aria-busy={cargando || guardando}>
             <div style={styles.avatarWrapper}>
               {foto ? (
                 <img src={foto} alt={nombreTutor} style={styles.avatarImg} />
@@ -140,6 +115,7 @@ export const ModalPerfilTutor: React.FC<ModalPerfilTutorProps> = ({
                 accept="image/png, image/jpeg, image/jpg, image/webp"
                 style={{ display: 'none' }}
                 onChange={handleSeleccionarArchivo}
+                disabled={controlesDeshabilitados}
               />
 
               <button
@@ -147,6 +123,7 @@ export const ModalPerfilTutor: React.FC<ModalPerfilTutorProps> = ({
                 onClick={() => fileInputRef.current && fileInputRef.current.click()}
                 className="btn-primary"
                 style={styles.uploadBtn}
+                disabled={controlesDeshabilitados}
               >
                 <Camera size={16} />
                 <span>{foto ? 'Cambiar Foto' : 'Subir Foto'}</span>
@@ -159,6 +136,7 @@ export const ModalPerfilTutor: React.FC<ModalPerfilTutorProps> = ({
                   className="btn-secondary"
                   style={styles.removeBtn}
                   title="Eliminar foto de perfil"
+                  disabled={controlesDeshabilitados}
                 >
                   <Trash2 size={16} color="#ef4444" />
                   <span style={{ color: '#ef4444' }}>Eliminar</span>
@@ -169,14 +147,14 @@ export const ModalPerfilTutor: React.FC<ModalPerfilTutorProps> = ({
             <p style={styles.formatHint}>Formatos admitidos: PNG, JPG, JPEG o WEBP (máx. 5 MB)</p>
 
             {mensajeExito ? (
-              <div style={styles.successAlert}>
+              <div style={styles.successAlert} role="status">
                 <span>{mensajeExito}</span>
               </div>
             ) : null}
 
-            {errorArchivo ? (
-              <div style={styles.errorAlert}>
-                <span>{errorArchivo}</span>
+            {mensajeError ? (
+              <div style={styles.errorAlert} role="alert">
+                <span>{mensajeError}</span>
               </div>
             ) : null}
           </div>

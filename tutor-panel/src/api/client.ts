@@ -2,13 +2,17 @@ const BASE_URL = '/api';
 
 export interface RequestConfig extends RequestInit {
   body?: any;
+  cuerpoCrudo?: BodyInit;
 }
 
-export async function apiClient<T = any>(endpoint: string, { body, ...customConfig }: RequestConfig = {}): Promise<T> {
+export async function apiClient<T = any>(
+  endpoint: string,
+  { body, cuerpoCrudo, ...customConfig }: RequestConfig = {},
+): Promise<T> {
   const token = sessionStorage.getItem('token');
 
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    ...(cuerpoCrudo === undefined ? { 'Content-Type': 'application/json' } : {}),
   };
 
   if (token) {
@@ -16,7 +20,7 @@ export async function apiClient<T = any>(endpoint: string, { body, ...customConf
   }
 
   let metodoHttp = 'GET';
-  if (body) {
+  if (body || cuerpoCrudo !== undefined) {
     metodoHttp = 'POST';
   }
 
@@ -29,7 +33,9 @@ export async function apiClient<T = any>(endpoint: string, { body, ...customConf
     },
   };
 
-  if (body) {
+  if (cuerpoCrudo !== undefined) {
+    config.body = cuerpoCrudo;
+  } else if (body) {
     config.body = JSON.stringify(body);
   }
 
@@ -44,7 +50,8 @@ export async function apiClient<T = any>(endpoint: string, { body, ...customConf
     }
 
     if (!response.ok) {
-      if (response.status === 401 && !endpoint.includes('/auth/login')) {
+      if (response.status === 401 && !endpoint.includes('/auth/login') &&
+          !config.signal?.aborted && sessionStorage.getItem('token') === token) {
         sessionStorage.removeItem('token');
         sessionStorage.removeItem('usuario');
         localStorage.removeItem('token');
@@ -61,7 +68,7 @@ export async function apiClient<T = any>(endpoint: string, { body, ...customConf
 
     return data as T;
   } catch (error: any) {
-    console.error(`[ERROR API] ${endpoint}:`, error.message);
+    if (!config.signal?.aborted) console.error(`[ERROR API] ${endpoint}:`, error.message);
     throw error;
   }
 }

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { authApi } from '../api/auth.api';
+import { useFotoPerfil } from '../hooks/useFotoPerfil';
 import type { Usuario, AuthContextType } from '../types/index';
 import { AuthContext } from './AuthContext';
 
@@ -115,6 +116,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     esAdmin = true;
   }
 
+  const fotoPerfil = useFotoPerfil(!cargando && (esTutor || esAdmin) ? token : null);
+
   const valor: AuthContextType = {
     usuario,
     token,
@@ -123,6 +126,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     estaAutenticado,
     esTutor,
     esAdmin,
+    fotoPerfil,
     iniciarSesion,
     cerrarSesion,
   };

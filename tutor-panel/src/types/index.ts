@@ -90,6 +90,8 @@ export interface ActividadResumen {
 
 export type MisionDesactivada = Pick<ActividadResumen, 'id' | 'titulo' | 'modulo'>;
 
+export type AccionAsignacion = 'desactivar' | 'reactivar' | 'quitar';
+
 export interface MetricasDashboard {
   totalEstudiantes: number;
   totalMisiones?: number;
@@ -120,6 +122,15 @@ export interface DetalleEstudianteResponse {
   misiones: MisionDetalleEstudiante[];
 }
 
+export interface FotoPerfil {
+  foto: string | null;
+  error: string | null;
+  cargando: boolean;
+  guardando: boolean;
+  guardar: (archivo: File) => Promise<void>;
+  eliminar: () => Promise<void>;
+}
+
 export interface AuthContextType {
   usuario: Usuario | null;
   token: string | null;
@@ -128,6 +139,7 @@ export interface AuthContextType {
   estaAutenticado: boolean;
   esTutor: boolean;
   esAdmin: boolean;
+  fotoPerfil: FotoPerfil;
   iniciarSesion: (email: string, password: string) => Promise<Usuario>;
   cerrarSesion: () => void;
 }

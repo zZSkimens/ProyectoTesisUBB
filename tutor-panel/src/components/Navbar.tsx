@@ -5,22 +5,10 @@ import { useAuth } from '../context/useAuth';
 import { ModalPerfilTutor } from './ModalPerfilTutor';
 
 export const Navbar: React.FC = () => {
-  const { usuario, cerrarSesion } = useAuth();
+  const { usuario, cerrarSesion, fotoPerfil } = useAuth();
   const [menuAbierto, setMenuAbierto] = useState<boolean>(false);
   const [modalPerfilAbierto, setModalPerfilAbierto] = useState<boolean>(false);
   const menuRef = useRef<HTMLDivElement>(null);
-
-  const [fotoPerfil, setFotoPerfil] = useState<string | null>(() => {
-    let key = 'tutor_foto_perfil_default';
-    if (usuario && usuario.id) {
-      key = 'tutor_foto_perfil_' + usuario.id;
-    }
-    const guardada = localStorage.getItem(key);
-    if (guardada) {
-      return guardada;
-    }
-    return null;
-  });
 
   useEffect(() => {
     const handleClickAfuera = (e: MouseEvent) => {
@@ -67,8 +55,8 @@ export const Navbar: React.FC = () => {
           <div style={styles.userSection} ref={menuRef}>
             <div style={styles.userInfo}>
               <div style={styles.avatar}>
-                {fotoPerfil ? (
-                  <img src={fotoPerfil} alt={nombreTutor} style={styles.avatarImg} />
+                {fotoPerfil.foto ? (
+                  <img src={fotoPerfil.foto} alt={nombreTutor} style={styles.avatarImg} />
                 ) : (
                   <UserCheck size={18} color="#ffffff" />
                 )}
@@ -120,7 +108,6 @@ export const Navbar: React.FC = () => {
         <ModalPerfilTutor
           usuario={usuario}
           fotoPerfil={fotoPerfil}
-          onFotoActualizada={(nuevaFoto: string | null) => setFotoPerfil(nuevaFoto)}
           onClose={() => setModalPerfilAbierto(false)}
         />
       ) : null}

@@ -1,6 +1,7 @@
 import { relations, sql } from 'drizzle-orm';
 import {
   boolean,
+  customType,
   integer,
   pgTable,
   primaryKey,
@@ -11,6 +12,10 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({
+  dataType: () => 'bytea',
+});
+
 export const usuarios = pgTable('usuarios', {
   id: serial('id').primaryKey(),
   nombre: text('nombre').notNull(),
@@ -20,6 +25,12 @@ export const usuarios = pgTable('usuarios', {
   activo: boolean('activo').default(true).notNull(),
   creadoEn: timestamp('creado_en', { withTimezone: true }).defaultNow().notNull(),
   actualizadoEn: timestamp('actualizado_en', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const fotosPerfil = pgTable('fotos_perfil', {
+  usuarioId: integer('usuario_id').primaryKey().references(() => usuarios.id, { onDelete: 'cascade' }),
+  tipoMime: varchar('tipo_mime', { length: 20 }).notNull(),
+  contenido: bytea('contenido').notNull(),
 });
 
 export const tokensRevocados = pgTable('tokens_revocados', {
