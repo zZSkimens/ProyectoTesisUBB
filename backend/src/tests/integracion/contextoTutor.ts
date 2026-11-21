@@ -17,14 +17,10 @@ export interface TutorTestContext extends TutorDePrueba {
 }
 
 export async function crearContextoTutorTest(): Promise<TutorTestContext> {
-  const express = (await import('express')).default;
-  const apiRoutes = (await import('../../routes/index.js')).default;
+  const { default: app } = await import('../../app.js');
   const connection = await import('../../../db/connection.js');
   const schema = await import('../../../db/schema.js');
 
-  const app = express();
-  app.use(express.json());
-  app.use('/api', apiRoutes);
   const idsTutores: number[] = [];
   const hashesDeSesion = new Set<string>();
 
