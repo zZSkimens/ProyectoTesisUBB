@@ -1,41 +1,28 @@
-import type { Request, Response } from 'express';
-import { tutoresService } from '../services/tutores.service.js';
-
-function responderError(res: Response, error: unknown, operacion: string): void {
-  console.error(`[ERROR] Fallo en ${operacion}:`, error);
-  let statusCode = 500;
-  let mensaje = 'Ocurrio un error interno en el servidor';
-
-  if (error instanceof Error && error.message.includes('Ya existe')) {
-    statusCode = 409;
-    mensaje = error.message;
-  } else if (error instanceof Error && error.message.includes('no encontrado')) {
-    statusCode = 404;
-    mensaje = error.message;
-  }
-
-  res.status(statusCode).json({ error: mensaje });
-}
+import type { NextFunction, Request, Response } from 'express';
+import { ErrorAplicacion } from '../utils/errorAplicacion.js';
+import { actividadesTutorService } from '../services/actividadesTutor.service.js';
+import { bitacoraService } from '../services/bitacora.service.js';
+import { centrosAtencionService } from '../services/centrosAtencion.service.js';
+import { dashboardTutorService } from '../services/dashboardTutor.service.js';
+import { estudiantesService } from '../services/estudiantes.service.js';
 
 export const tutoresController = {
-  async dashboard(req: Request, res: Response): Promise<void> {
+  async dashboard(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.usuario) {
-        res.status(401).json({ error: 'No autenticado' });
-        return;
+        throw new ErrorAplicacion('SESION_INVALIDA', 'No autenticado');
       }
-      const metricas = await tutoresService.obtenerDashboard(req.usuario.id);
+      const metricas = await dashboardTutorService.obtenerDashboard(req.usuario.id);
       res.json({ metricas });
     } catch (error) {
-      responderError(res, error, 'dashboard de tutor');
+      next(error);
     }
   },
 
-  async listarEstudiantes(req: Request, res: Response): Promise<void> {
+  async listarEstudiantes(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.usuario) {
-        res.status(401).json({ error: 'No autenticado' });
-        return;
+        throw new ErrorAplicacion('SESION_INVALIDA', 'No autenticado');
       }
 
       const { busqueda, estado } = req.query;
@@ -48,52 +35,49 @@ export const tutoresController = {
         filtros.estado = estado;
       }
 
-      const estudiantes = await tutoresService.listarEstudiantes(req.usuario.id, filtros);
+      const estudiantes = await estudiantesService.listarEstudiantes(req.usuario.id, filtros);
       res.json({ estudiantes });
     } catch (error) {
-      responderError(res, error, 'listado de estudiantes');
+      next(error);
     }
   },
 
-  async crearEstudiante(req: Request, res: Response): Promise<void> {
+  async crearEstudiante(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.usuario) {
-        res.status(401).json({ error: 'No autenticado' });
-        return;
+        throw new ErrorAplicacion('SESION_INVALIDA', 'No autenticado');
       }
 
-      const nuevo = await tutoresService.crearEstudiante(req.usuario.id, req.body);
+      const nuevo = await estudiantesService.crearEstudiante(req.usuario.id, req.body);
       res.status(201).json({
         mensaje: 'Estudiante novato registrado exitosamente',
         estudiante: nuevo,
       });
     } catch (error) {
-      responderError(res, error, 'creacion de estudiante');
+      next(error);
     }
   },
 
-  async eliminarEstudiante(req: Request, res: Response): Promise<void> {
+  async eliminarEstudiante(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.usuario) {
-        res.status(401).json({ error: 'No autenticado' });
-        return;
+        throw new ErrorAplicacion('SESION_INVALIDA', 'No autenticado');
       }
 
-      await tutoresService.eliminarEstudiante(req.usuario.id, Number(req.params.id));
+      await estudiantesService.eliminarEstudiante(req.usuario.id, Number(req.params.id));
       res.json({ mensaje: 'Estudiante eliminado correctamente' });
     } catch (error) {
-      responderError(res, error, 'eliminacion de estudiante');
+      next(error);
     }
   },
 
-  async crearObservacion(req: Request, res: Response): Promise<void> {
+  async crearObservacion(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.usuario) {
-        res.status(401).json({ error: 'No autenticado' });
-        return;
+        throw new ErrorAplicacion('SESION_INVALIDA', 'No autenticado');
       }
 
-      const observacion = await tutoresService.crearObservacion(
+      const observacion = await bitacoraService.crearObservacion(
         req.usuario.id,
         Number(req.params.id),
         req.body
@@ -104,85 +88,80 @@ export const tutoresController = {
         observacion,
       });
     } catch (error) {
-      responderError(res, error, 'creacion de observacion');
+      next(error);
     }
   },
 
-  async obtenerObservaciones(req: Request, res: Response): Promise<void> {
+  async obtenerObservaciones(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.usuario) {
-        res.status(401).json({ error: 'No autenticado' });
-        return;
+        throw new ErrorAplicacion('SESION_INVALIDA', 'No autenticado');
       }
 
-      const observaciones = await tutoresService.obtenerObservaciones(
+      const observaciones = await bitacoraService.obtenerObservaciones(
         req.usuario.id,
         Number(req.params.id)
       );
 
       res.json({ observaciones });
     } catch (error) {
-      responderError(res, error, 'consulta de observaciones');
+      next(error);
     }
   },
 
-  async obtenerHorarioConsultas(req: Request, res: Response): Promise<void> {
+  async obtenerHorarioConsultas(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.usuario) {
-        res.status(401).json({ error: 'No autenticado' });
-        return;
+        throw new ErrorAplicacion('SESION_INVALIDA', 'No autenticado');
       }
 
-      const centros = await tutoresService.obtenerHorarioConsultas(req.usuario.id);
+      const centros = await centrosAtencionService.obtenerHorarioConsultas(req.usuario.id);
       res.json({ centros });
     } catch (error) {
-      responderError(res, error, 'consulta de horario');
+      next(error);
     }
   },
 
-  async actualizarHorarioConsultas(req: Request, res: Response): Promise<void> {
+  async actualizarHorarioConsultas(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.usuario) {
-        res.status(401).json({ error: 'No autenticado' });
-        return;
+        throw new ErrorAplicacion('SESION_INVALIDA', 'No autenticado');
       }
 
-      const centros = await tutoresService.actualizarHorarioConsultas(req.usuario.id, req.body);
+      const centros = await centrosAtencionService.actualizarHorarioConsultas(req.usuario.id, req.body);
       res.json({
         mensaje: 'Centros de atencion actualizados correctamente',
         centros,
       });
     } catch (error) {
-      responderError(res, error, 'actualizacion de horario');
+      next(error);
     }
   },
 
-  async listarActividades(req: Request, res: Response): Promise<void> {
+  async listarActividades(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.usuario) {
-        res.status(401).json({ error: 'No autenticado' });
-        return;
+        throw new ErrorAplicacion('SESION_INVALIDA', 'No autenticado');
       }
-      res.json(await tutoresService.obtenerResumenActividades(req.usuario.id));
+      res.json(await actividadesTutorService.obtenerResumenActividades(req.usuario.id));
     } catch (error) {
-      responderError(res, error, 'resumen de actividades');
+      next(error);
     }
   },
 
-  async detalleEstudiante(req: Request, res: Response): Promise<void> {
+  async detalleEstudiante(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.usuario) {
-        res.status(401).json({ error: 'No autenticado' });
-        return;
+        throw new ErrorAplicacion('SESION_INVALIDA', 'No autenticado');
       }
-      const detalle = await tutoresService.obtenerDetalleEstudiante(
+      const detalle = await estudiantesService.obtenerDetalleEstudiante(
         req.usuario.id,
         Number(req.params.id)
       );
 
       res.json(detalle);
     } catch (error) {
-      responderError(res, error, 'detalle de estudiante');
+      next(error);
     }
   },
 };
