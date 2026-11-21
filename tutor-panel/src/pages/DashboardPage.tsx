@@ -1,72 +1,29 @@
 import type React from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Menu, RefreshCw } from 'lucide-react';
-import { tutoresApi } from '../api/tutores.api';
 import { BannerAlertas } from '../components/BannerAlertas';
 import { ModalEstudiante } from '../components/ModalEstudiante';
 import { ModalNuevoEstudiante } from '../components/ModalNuevoEstudiante';
 import { Sidebar, type SeccionPanel } from '../components/Sidebar';
 import { TablaEstudiantes } from '../components/TablaEstudiantes';
 import { TarjetasMetricas } from '../components/TarjetasMetricas';
-import { VistaActividades } from '../components/VistaActividades';
+import { VistaActividades } from '../components/actividades/VistaActividades';
 import { BorradoresMisiones } from '../components/BorradoresMisiones';
 import { VistaHorarioConsultas } from '../components/VistaHorarioConsultas';
 import { useAuth } from '../context/useAuth';
-import type { Estudiante, MetricasDashboard, ActividadResumen, MisionDesactivada } from '../types/index';
+import { useDatosDashboard } from '../hooks/useDatosDashboard';
 
 export const DashboardPage: React.FC = () => {
   const { usuario } = useAuth();
 
-  const [metricas, setMetricas] = useState<MetricasDashboard | null>(null);
-  const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
-  const [actividades, setActividades] = useState<ActividadResumen[]>([]);
-  const [misionesDesactivadas, setMisionesDesactivadas] = useState<MisionDesactivada[]>([]);
+  const {
+    metricas, estudiantes, actividades, misionesDesactivadas, cargando, error, cargarDatos, actualizarActividades,
+  } = useDatosDashboard();
+
   const [seccionActiva, setSeccionActiva] = useState<SeccionPanel>('dashboard');
-  const [cargando, setCargando] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
   const [estudianteModalId, setEstudianteModalId] = useState<number | null>(null);
   const [mostrarModalNuevo, setMostrarModalNuevo] = useState<boolean>(false);
   const [sidebarAbierto, setSidebarAbierto] = useState<boolean>(false);
-  const solicitudActual = useRef(0);
-  const invalidarSolicitudes = useCallback(() => {
-    solicitudActual.current++;
-  }, []);
-
-  const recibirDatos = useCallback(async (solicitudId: number) => {
-    try {
-      const [resDashboard, resEstudiantes, resActividades] = await Promise.all([
-        tutoresApi.obtenerDashboard(),
-        tutoresApi.obtenerEstudiantes(),
-        tutoresApi.obtenerActividades(),
-        new Promise((resolve) => setTimeout(resolve, 400)),
-      ]);
-
-      if (solicitudId !== solicitudActual.current) return;
-      setMetricas(resDashboard.metricas);
-      setEstudiantes(resEstudiantes.estudiantes);
-      setActividades(resActividades.actividades);
-      setMisionesDesactivadas(resActividades.misionesDesactivadas ?? []);
-    } catch (err: any) {
-      if (solicitudId !== solicitudActual.current) return;
-      setError(err.message || 'Error al cargar la información del panel');
-    } finally {
-      if (solicitudId === solicitudActual.current) setCargando(false);
-    }
-  }, []);
-
-  const cargarDatos = async () => {
-    setCargando(true);
-    setError(null);
-    await recibirDatos(++solicitudActual.current);
-  };
-
-  useEffect(() => {
-    void recibirDatos(++solicitudActual.current);
-    return () => {
-      // Las respuestas pendientes dejan de ser validas al salir de esta vista.
-      invalidarSolicitudes();
-    };
-  }, [recibirDatos, invalidarSolicitudes]);
 
   let nombreTutor = 'Tutor';
   if (usuario && usuario.nombre) {
@@ -195,14 +152,7 @@ export const DashboardPage: React.FC = () => {
                 misionesDesactivadas={misionesDesactivadas}
                 cargando={cargando}
                 onSelectEstudiante={setEstudianteModalId}
-                onAsignacionCambiada={(id, accion) => {
-                  if (accion === 'desactivar') {
-                    setActividades((actuales) => actuales.filter((actividad) => actividad.id !== id));
-                  } else {
-                    setMisionesDesactivadas((actuales) => actuales.filter((mision) => mision.id !== id));
-                  }
-                  void cargarDatos();
-                }}
+                onAsignacionCambiada={actualizarActividades}
               />
             </div>
           )}
