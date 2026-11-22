@@ -1,5 +1,5 @@
-export const MAXIMO_PUNTOS = 3000;
-export const UMBRAL_META_INDUCCION = 1700;
+export const MAXIMO_PUNTOS = 2000;
+export const UMBRAL_META_INDUCCION = 1400;
 
 export function resumirPuntos(
   misiones: { id: number; puntosRecompensa: number }[],

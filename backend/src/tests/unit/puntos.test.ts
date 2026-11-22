@@ -2,7 +2,7 @@ import { expect, it } from 'vitest';
 import { resumirPuntos } from '../../utils/puntos.js';
 import { calcularBarraPuntos } from '../../../../tutor-panel/src/utils/calcularBarraPuntos.js';
 
-it('cuenta cada misión completada hasta su recompensa y limita el total a 3000', () => {
+it('cuenta cada misión completada una vez y hasta el valor de su recompensa', () => {
   const misiones = [{ id: 1, puntosRecompensa: 150 }, { id: 2, puntosRecompensa: 200 }];
   const progresos = [
     { misionId: 1, estado: 'completada', puntajeObtenido: 140 },
@@ -12,11 +12,6 @@ it('cuenta cada misión completada hasta su recompensa y limita el total a 3000'
   ];
 
   expect(resumirPuntos(misiones, progresos).puntajeTotal).toBe(150);
-
-  const catalogo = Array.from({ length: 16 }, (_, i) => ({ id: i + 1, puntosRecompensa: 200 }));
-  const completadas = catalogo.map(({ id }) => ({ misionId: id, estado: 'completada', puntajeObtenido: 200 }));
-  expect(resumirPuntos(catalogo, completadas.slice(0, 14)).puntajeTotal).toBe(2800);
-  expect(resumirPuntos(catalogo, completadas).puntajeTotal).toBe(3000);
 });
 
 function resumirPuntajeDeMisionesCompletadas(total: number) {
@@ -30,18 +25,22 @@ function resumirPuntajeDeMisionesCompletadas(total: number) {
 }
 
 it.each([
-  { total: 2999, esperado: 2999 },
-  { total: 3000, esperado: 3000 },
-  { total: 3001, esperado: 3000 },
+  { total: 1999, esperado: 1999 },
+  { total: 2000, esperado: 2000 },
+  { total: 2001, esperado: 2000 },
 ])('devuelve $esperado puntos cuando el estudiante ha ganado $total', ({ total, esperado }) => {
   expect(resumirPuntajeDeMisionesCompletadas(total).puntajeTotal).toBe(esperado);
+  expect(calcularBarraPuntos({ puntajeTotal: total }).puntos).toBe(esperado);
 });
 
 it.each([
-  { total: 1699, alcanzada: false },
-  { total: 1700, alcanzada: true },
-  { total: 1701, alcanzada: true },
+  { total: 1399, alcanzada: false },
+  { total: 1400, alcanzada: true },
+  { total: 1401, alcanzada: true },
 ])('muestra el estado de la meta con $total puntos ($alcanzada)', ({ total, alcanzada }) => {
   const resumen = resumirPuntajeDeMisionesCompletadas(total);
-  expect(calcularBarraPuntos(resumen)).toMatchObject({ puntos: total, alcanzada });
+  expect(resumen).toMatchObject({ maximoPuntos: 2000, umbralMetaPuntos: 1400 });
+  const barraEsperada = { maximo: 2000, umbral: 1400, puntos: total, alcanzada };
+  expect(calcularBarraPuntos(resumen)).toEqual(barraEsperada);
+  expect(calcularBarraPuntos({ puntajeTotal: total })).toEqual(barraEsperada);
 });
